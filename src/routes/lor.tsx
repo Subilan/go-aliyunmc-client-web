@@ -95,7 +95,7 @@ export default function Lor() {
 	const [loginLoading, setLoginLoading] = useState(false);
 	const onLoginFormSubmit = useCallback(async (values: LoginFormPayload) => {
 		setLoginLoading(true);
-		const { data: token, error } = await req('/auth/get-token', 'POST', {
+		const { data: token, error } = await req('/auth/token', 'POST', {
 			username: values.username,
 			password: values.password,
 			keepAlive: values.keepAlive
@@ -114,7 +114,7 @@ export default function Lor() {
 	const [registerLoading, setRegisterLoading] = useState(false);
 	const onRegisterFormSubmit = useCallback(async (values: RegisterFormPayload) => {
 		setRegisterLoading(true);
-		const { error } = await req('/user/create', 'POST', {
+		const { error } = await req('/user', 'POST', {
 			username: values.username,
 			password: values.password
 		});

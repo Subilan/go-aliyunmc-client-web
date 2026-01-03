@@ -8,7 +8,7 @@ export default function DataListKv(props: { data: Record<string, string | { cont
 	return (
 		<div className={cn('gap-4', props.grid ? 'grid grid-cols-2' : 'flex flex-col')}>
 			{Object.entries(props.data).map(([k, v]) => (
-				<div className="flex items-center gap-2">
+				<div className="flex items-center gap-2" key={k}>
 					<div className="w-25 text-neutral-500">{k}</div>
 					{typeof v === 'string' && <div>{v}</div>}
 					{typeof v === 'object' &&

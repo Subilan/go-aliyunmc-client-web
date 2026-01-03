@@ -1,23 +1,34 @@
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
+import duration from 'dayjs/plugin/duration';
 import 'dayjs/locale/zh-cn'
 
-export function getExtendedDayjs(datetime: string | Date) {
+export type DateLike = string | Date;
+
+export function getExtendedDayjs() {
 	dayjs.extend(relativeTime);
+    dayjs.extend(duration);
     dayjs.locale('zh-cn')
-	return dayjs(datetime);
+	return dayjs;
 }
 
-export function formatDatetime(datetime: string | Date, format = 'YYYY-MM-DD HH:mm:ss') {
-    return dayjs(datetime).format(format);
+const extendedDayjs = getExtendedDayjs();
+
+export function formatDatetime(datetime: DateLike, format = 'YYYY-MM-DD HH:mm:ss') {
+    return extendedDayjs(datetime).format(format);
 }
 
-export function formatDateAgo(datetime: string | Date) {
-    return getExtendedDayjs(datetime).fromNow();
+export function formatDateAgo(datetime: DateLike) {
+    return extendedDayjs(datetime).fromNow();
+}
+
+export function formatDuration(d1: DateLike, d2: DateLike) {
+    return extendedDayjs.duration(extendedDayjs(d1).diff(d2));
 }
 
 export default {
     getExtendedDayjs,
     formatDateAgo,
-    formatDatetime
+    formatDatetime,
+    formatDuration
 }
