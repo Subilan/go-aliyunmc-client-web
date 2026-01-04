@@ -6,10 +6,10 @@ import { IndexRoute } from '@/routes';
 import { LoginRoute } from '@/routes/lor';
 import { createRootRoute, createRouter, RouterProvider } from '@tanstack/react-router';
 import { useContext, useEffect, useState } from 'react';
-import { Toaster } from 'react-hot-toast';
 import { PreviewRoute } from '@/routes/preview';
 import ErrorBoundary from '@/error';
 import { StreamManagerContext } from '@/contexts/StreamManagerContext';
+import { Toaster } from '@/components/ui/sonner';
 
 export const RootRoute = createRootRoute({
 	errorComponent: ErrorBoundary
@@ -77,13 +77,7 @@ export function Root() {
 
 	return (
 		<>
-			<Toaster
-				toastOptions={{
-					style: {
-						padding: '8px 13px'
-					}
-				}}
-			/>
+			<Toaster position='top-center' duration={2000}/>
 			<UserPayloadContext.Provider value={userPayload}>
 				<RouterProvider router={router} />
 			</UserPayloadContext.Provider>

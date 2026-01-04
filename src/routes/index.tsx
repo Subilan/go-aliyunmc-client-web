@@ -1,21 +1,28 @@
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { UserPayloadContext } from '@/contexts/UserPayloadContext';
 import { RootRoute, router } from '@/root';
 import { createRoute, redirect } from '@tanstack/react-router';
 import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import times from '@/lib/times';
 import DataListKv from '@/components/data-list-kv';
-import { CopyIcon, InfoIcon, RefreshCwIcon } from 'lucide-react';
+import { CopyIcon, InfoIcon, MoreHorizontalIcon, RouteOffIcon } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { isAuthenticated, req } from '@/lib/req';
 import { cn } from '@/lib/utils';
 import { Item, ItemContent, ItemMedia, ItemTitle, ItemDescription, ItemActions } from '@/components/ui/item';
 import { StreamManagerContext } from '@/contexts/StreamManagerContext';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSub, DropdownMenuSubContent, DropdownMenuSubTrigger, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import CreateInstanceDialog from '@/components/dialogs/index/CreateInstanceDialog';
+import DeleteInstanceDialog from '@/components/dialogs/index/DeleteInstanceDialog';
+import DeployInstanceDialog from '@/components/dialogs/index/DeployInstanceDialog';
+import OptTooltip from '@/components/optional-tooltip';
 import { Spinner } from '@/components/ui/spinner';
-import { Alert, AlertAction, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import toast from 'react-hot-toast';
+import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty';
+import { toast } from 'sonner';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import StopServerDialog from '@/components/dialogs/index/StopServerDialog';
+import InstanceDetailDialog from '@/components/dialogs/index/InstanceDetailDialog';
 
 export const IndexRoute = createRoute({
 	path: '/',
@@ -26,24 +33,103 @@ export const IndexRoute = createRoute({
 			throw redirect({ to: '/lor' });
 		}
 	},
-	loader() {
-		return fetchActiveOrLatestInstanceAndStatus();
+	async loader() {
+		const instanceData = await fetchActiveOrLatestInstanceAndStatus();
+		const taskData = await fetchActiveDeploymentTask();
+		const serverInfo = await fetchServerInfo();
+		return {
+			...instanceData,
+			activeDeploymentTask: taskData,
+			serverInfo
+		};
 	}
 });
 
-async function fetchActiveOrLatestInstanceAndStatus() {
-	let { data: activeOrLatestInstance, error } = await req('/active-or-latest-instance', 'GET');
+type ServerInfo =
+	| {
+			running: true;
+			data: {
+				version: {
+					name: {
+						raw: string;
+						clean: string;
+						html: string;
+					};
+					protocol: number;
+				};
+				players: {
+					max: number;
+					online: number;
+					sample: Array<{
+						id: string;
+						name: {
+							raw: string;
+							clean: string;
+							html: string;
+						};
+					}>;
+				};
+				motd: {
+					raw: string;
+					clean: string;
+					html: string;
+				};
+				favicon: any;
+				srv_record: any;
+				mods: any;
+			};
+			onlinePlayers: string[];
+	  }
+	| { running: false };
+
+async function fetchServerInfo() {
+	const { data, error } = await req<ServerInfo>('/server/info', 'get');
 
 	if (error !== null) {
-		return { instance: {}, instanceStatus: '' };
+		return undefined;
+	}
+
+	return data;
+}
+
+async function fetchActiveDeploymentTask() {
+	let { data, error } = await req('/task?type=instance_deployment', 'get');
+
+	if (error !== null) {
+		return undefined;
+	}
+
+	return data.status;
+}
+
+type Instance = {
+	instanceId: string;
+	instanceType: string;
+	regionId: string;
+	zoneId: string;
+	deletedAt: string | null;
+	createdAt: string;
+	deployed: boolean;
+	ip: string | null;
+};
+
+type InstanceStatus = {
+	instanceId: string;
+	instanceStatus: '__created__' | 'Pending' | 'Starting' | 'Running' | 'Stopping' | 'Stopped' | 'unable_to_get';
+	updatedAt: string;
+};
+
+async function fetchActiveOrLatestInstanceAndStatus() {
+	let { data: activeOrLatestInstance, error } = await req<{ instance: Instance; status: InstanceStatus }>('/active-or-latest-instance', 'GET');
+
+	if (error !== null) {
+		return { instance: undefined, instanceStatus: undefined };
 	}
 
 	return { instance: activeOrLatestInstance?.instance, instanceStatus: activeOrLatestInstance?.status.instanceStatus };
 }
 
-export type InstanceStatus = '__created__' | 'Pending' | 'Starting' | 'Running' | 'Stopping' | 'Stopped' | 'unable_to_get';
-
-const instanceStatusColor: Record<InstanceStatus, string> = {
+const instanceStatusColor: Record<InstanceStatus['instanceStatus'], string> = {
 	__created__: 'before:bg-gray-500',
 	Pending: 'before:bg-amber-500',
 	Starting: 'before:bg-amber-500',
@@ -53,7 +139,7 @@ const instanceStatusColor: Record<InstanceStatus, string> = {
 	unable_to_get: 'before:bg-red-500'
 };
 
-const instanceStatusText: Record<InstanceStatus, string> = {
+const instanceStatusText: Record<InstanceStatus['instanceStatus'], string> = {
 	__created__: '已创建',
 	Pending: '准备中',
 	Starting: '启动中',
@@ -61,13 +147,6 @@ const instanceStatusText: Record<InstanceStatus, string> = {
 	Stopping: '关闭中',
 	Stopped: '已关闭',
 	unable_to_get: '同步失败'
-};
-
-type InstanceTypeAndTradePrice = {
-	instanceType: string;
-	cpuCoreCount: number;
-	memorySize: number;
-	tradePrice: number;
 };
 
 export default function Index() {
@@ -83,11 +162,25 @@ export default function Index() {
 
 	const [instance, setInstance] = useState(loaded.instance);
 	const [instanceStatus, setInstanceStatus] = useState(loaded.instanceStatus);
+	const [activeDeploymentTaskStatus, setActiveDeploymentTaskStatus] = useState(loaded.activeDeploymentTask);
+	const [serverInfo, setServerInfo] = useState(loaded.serverInfo);
+	// const [isServerRunning, setIsServerRunning] = useState(true);
+	// const [serverOnlineCount, setServerOnlineCount] = useState(2);
+	// const [serverOnlinePlayers, setServerOnlinePlayers] = useState<string[]>(['Subilan', 'Constant137']);
+	const isServerRunning = useMemo(() => !!serverInfo?.running, [serverInfo]);
+	const [serverOnlineCount, setServerOnlineCount] = useState(loaded.serverInfo?.running ? loaded.serverInfo?.data?.players.online : 0);
+	const [serverOnlinePlayers, setServerOnlinePlayers] = useState<string[]>(loaded.serverInfo?.running ? loaded.serverInfo.onlinePlayers : []);
 
-	const currentInstanceStatusColor = useMemo(() => (instance.deletedAt ? 'before:bg-gray-500' : instanceStatusColor[instanceStatus as InstanceStatus] || 'before:bg-gray-500'), [instance, instanceStatus]);
-	const currentInstanceStatusText = useMemo(() => (instance.deletedAt ? '未创建' : instanceStatusText[instanceStatus as InstanceStatus] || '未知状态'), [instanceStatus]);
+	const currentInstanceStatusColor = useMemo(() => (instanceStatus === undefined ? 'before:bg-gray-500' : instanceStatusColor[instanceStatus] || 'before:bg-gray-500'), [instance, instanceStatus]);
+	const currentInstanceStatusText = useMemo(() => (instanceStatus === undefined ? '未创建' : instanceStatusText[instanceStatus] || '未知状态'), [instanceStatus]);
 
 	const streamManager = useContext(StreamManagerContext);
+
+	const [createInstanceDialog, setCreateInstanceDialog] = useState(false);
+	const [deleteInstanceDialog, setDeleteInstanceDialog] = useState(false);
+	const [deployInstanceDialog, setDeployInstanceDialog] = useState(false);
+	const [deployInstanceOutput, setDeployInstanceOutput] = useState('');
+	const [deployInstanceLatestOutput, setDeployInstanceLatestOutput] = useState('');
 
 	useEffect(() => {
 		streamManager.setHook('onInstance', async event => {
@@ -99,7 +192,16 @@ export default function Index() {
 				}
 
 				case 'active_ip_update': {
-					setInstance({ ...instance, ip: event.data });
+					setInstance(inst => (inst === undefined ? undefined : { ...inst, ip: event.data }));
+					break;
+				}
+
+				case 'deployment_task_status_update': {
+					setActiveDeploymentTaskStatus(event.data);
+					setInstance(inst => (inst === undefined ? undefined : { ...inst, deployed: true }));
+					if (event.data !== 'running') {
+						streamManager.clearLastEventId();
+					}
 					break;
 				}
 
@@ -113,6 +215,7 @@ export default function Index() {
 						case 'instance_deleted': {
 							const fetched = await fetchActiveOrLatestInstanceAndStatus();
 							setInstance(fetched.instance);
+							streamManager.clearLastEventId();
 							break;
 						}
 					}
@@ -120,112 +223,86 @@ export default function Index() {
 			}
 		});
 
-		return () => streamManager.rmHook('onInstance');
-	}, [instance]);
-
-	const [bestInstanceTypeLoading, setBestInstanceTypeLoading] = useState(false);
-	const [bestInstanceType, setBestInstanceType] = useState<InstanceTypeAndTradePrice>();
-	const [bestInstanceTypeError, setBestInstanceTypeError] = useState<string | null>(null);
-
-	const [createInstanceDialog, setCreateInstanceDialog] = useState(false);
-	const [createInstanceLoading, setCreateInstanceLoading] = useState(false);
-
-	const refreshBestInstanceType = useCallback(async () => {
-		setBestInstanceTypeLoading(true);
-		req<{ zoneId: string; typesAndTradePrice: InstanceTypeAndTradePrice[] }[]>('/instance-types-and-charge?minimumMemorySize=8&maximumMemorySize=16&minimumCpuCoreCount=1&maximumCpuCoreCount=8&cpuArchitecture=X86&zoneId=cn-shenzhen-c&sortBy=tradePrice&sortOrder=asc', 'GET').then(({ data, error }) => {
-			setBestInstanceTypeLoading(false);
-
-			if (error !== null) {
-				setBestInstanceTypeError(error);
-				return;
-			}
-
-			const best = data[0].typesAndTradePrice.filter(x => x.memorySize > 8 && !/^ecs\.(e|s6|xn4|n4|mn4|e4|t|d).*$/.test(x.instanceType) && x.tradePrice < 0.6)[0];
-
-			if (best === undefined) {
-				setBestInstanceTypeError('没有符合要求的实例');
-				return;
-			}
-
-			setBestInstanceType(best);
+		streamManager.setHook('onDeployment', event => {
+			setDeployInstanceOutput(state => state + event);
+			setDeployInstanceLatestOutput(event);
 		});
+
+		streamManager.setHook('onServer', event => {
+			console.log('on server', event);
+			switch (event.type) {
+				case 'notify': {
+					if (event.data === 'running') {
+						// @ts-ignore
+						setServerInfo(info => ({ ...info, running: true }));
+						fetchServerInfo().then(info => setServerInfo(info));
+					}
+
+					if (event.data === 'closed') {
+						setServerInfo(info => ({ ...info, running: false }));
+						setServerOnlineCount(0);
+						setServerOnlinePlayers([]);
+					}
+					break;
+				}
+
+				case 'online_count_update': {
+					setServerOnlineCount(event.data);
+					break;
+				}
+
+				case 'online_players_update': {
+					const array = JSON.parse(event.data);
+
+					if (!Array.isArray(array)) {
+						console.warn('invalid online player update data');
+						break;
+					}
+
+					setServerOnlinePlayers(array);
+
+					break;
+				}
+			}
+		});
+
+		return () => {
+			streamManager.rmHook('onDeployment');
+			streamManager.rmHook('onInstance');
+		};
 	}, []);
 
-	useEffect(() => {
-		if (createInstanceDialog && bestInstanceType === undefined) {
-			refreshBestInstanceType();
-		}
-	}, [createInstanceDialog]);
+	const [startServerLoading, setStartServerLoading] = useState(false);
+
+	const [stopServerDialog, setStopServerDialog] = useState(false);
+	const [instanceDetailDialog, setInstanceDetailDialog] = useState(false);
 
 	return (
 		userPayload.valid && (
 			<>
-				<Dialog open={createInstanceDialog} onOpenChange={setCreateInstanceDialog}>
-					<DialogContent>
-						<DialogHeader>
-							<DialogTitle>创建实例</DialogTitle>
-							<DialogDescription aria-describedby={undefined} className="hidden"></DialogDescription>
-						</DialogHeader>
-						<div className="flex flex-col gap-3">
-							<p>确认要开始创建吗？</p>
-							<p>创建实例后，系统将尝试自动分配 IP 地址并开启实例。</p>
-							<Alert variant={bestInstanceTypeError ? 'destructive' : 'default'}>
-								{bestInstanceTypeError ? (
-									<>
-										<AlertTitle>无法找到实例</AlertTitle>
-										<AlertDescription>错误：{bestInstanceTypeError}</AlertDescription>
-									</>
-								) : (
-									<>
-										<AlertTitle>{bestInstanceTypeLoading ? '寻找最优实例中...' : bestInstanceType?.instanceType}</AlertTitle>
-										<AlertDescription>
-											{bestInstanceTypeLoading ? (
-												'可能需要至多 1 分钟，请耐心等待'
-											) : (
-												<div className="flex items-center gap-2">
-													cn-shenzhen-c <Separator orientation="vertical" /> {bestInstanceType?.cpuCoreCount} vCPU <Separator orientation="vertical" /> {bestInstanceType?.memorySize} GiB <Separator orientation="vertical" /> ¥{bestInstanceType?.tradePrice.toFixed(2)}/h
-												</div>
-											)}
-										</AlertDescription>
-										<AlertAction>
-											<Button disabled={bestInstanceTypeLoading} onClick={refreshBestInstanceType} variant={'outline'} size={'icon-xs'}>
-												<RefreshCwIcon size={5} />
-											</Button>
-										</AlertAction>
-									</>
-								)}
-							</Alert>
-						</div>
-						<DialogFooter>
-							<Button
-								onClick={async () => {
-									setCreateInstanceLoading(true);
-									const { error } = await req('/instance', 'POST', {
-										zoneId: 'cn-shenzhen-c',
-										instanceType: bestInstanceType?.instanceType,
-										vswitchId: 'vsw-wz995l4az1ab9awbe6wwz'
-									});
-									setCreateInstanceLoading(false);
-
-									if (error !== null) {
-										toast.error('创建失败：' + error);
-										return;
-									}
-
-									toast.success('创建成功');
-									setCreateInstanceDialog(false);
-								}}
-								disabled={createInstanceLoading || bestInstanceTypeLoading || bestInstanceTypeError !== null}
-							>
-								{bestInstanceTypeLoading ? '请等待' : <>确认创建 {createInstanceLoading && <Spinner />}</>}
-							</Button>
-						</DialogFooter>
-					</DialogContent>
-				</Dialog>
+				<StopServerDialog open={stopServerDialog} setOpen={setStopServerDialog} />
+				<InstanceDetailDialog open={instanceDetailDialog} setOpen={setInstanceDetailDialog} />
+				<CreateInstanceDialog open={createInstanceDialog} setOpen={setCreateInstanceDialog} />
+				<DeleteInstanceDialog open={deleteInstanceDialog} setOpen={setDeleteInstanceDialog} />
+				<DeployInstanceDialog latestOutput={deployInstanceLatestOutput} status={activeDeploymentTaskStatus} setStatus={setActiveDeploymentTaskStatus} output={deployInstanceOutput} open={deployInstanceDialog} setOpen={setDeployInstanceDialog} />
 				<div className="max-w-175 mx-auto my-16">
 					<div className="flex flex-col gap-5">
 						<h1 className="text-3xl">Hello, {userPayload.username}</h1>
-						{instance.deletedAt !== null && (
+						{activeDeploymentTaskStatus === 'running' && (
+							<Item variant={'outline'}>
+								<ItemMedia>
+									<Spinner />
+								</ItemMedia>
+								<ItemContent>
+									<ItemTitle>有部署正在进行中</ItemTitle>
+									<ItemDescription>正在安装基础软件、Java 并拉取服务器数据中。</ItemDescription>
+								</ItemContent>
+								<ItemActions>
+									<Button onClick={() => setDeployInstanceDialog(true)}>查看状态</Button>
+								</ItemActions>
+							</Item>
+						)}
+						{(instance === undefined || instance.deletedAt !== null) && (
 							<Item variant={'outline'}>
 								<ItemMedia>
 									<InfoIcon size={16} />
@@ -239,9 +316,46 @@ export default function Index() {
 								</ItemActions>
 							</Item>
 						)}
-						{instance.deletedAt === null && (
+						{instance?.deletedAt === null && (
 							<section>
 								<Card className="relative">
+									<div className="absolute top-6 right-6 flex items-center gap-3">
+										<OptTooltip show={!instance.deployed} content="请先部署实例">
+											<Button variant={'outline'} onClick={() => setInstanceDetailDialog(true)} disabled={!instance.deployed}>
+												详情
+											</Button>
+										</OptTooltip>
+										<DropdownMenu>
+											<DropdownMenuTrigger asChild>
+												<Button variant={'secondary'} size={'icon'}>
+													<MoreHorizontalIcon />
+												</Button>
+											</DropdownMenuTrigger>
+											<DropdownMenuContent>
+												<DropdownMenuItem disabled>开启</DropdownMenuItem>
+												<DropdownMenuItem disabled>关闭</DropdownMenuItem>
+												<DropdownMenuSub>
+													<DropdownMenuSubTrigger>高级</DropdownMenuSubTrigger>
+													<DropdownMenuSubContent>
+														<OptTooltip show={instanceStatus !== 'Running' || instance.deployed} content="实例未运行或已部署">
+															<DropdownMenuItem disabled={instanceStatus !== 'Running' || instance.deployed} onClick={() => setDeployInstanceDialog(true)}>
+																{activeDeploymentTaskStatus === undefined ? '触发部署' : '部署状态'}
+															</DropdownMenuItem>
+														</OptTooltip>
+														<DropdownMenuItem disabled>触发服务器备份</DropdownMenuItem>
+														<DropdownMenuItem disabled>触发服务器归档</DropdownMenuItem>
+														<DropdownMenuItem disabled variant="destructive">
+															保存并删除实例
+														</DropdownMenuItem>
+													</DropdownMenuSubContent>
+												</DropdownMenuSub>
+												<DropdownMenuItem onClick={() => setDeleteInstanceDialog(true)} variant="destructive">
+													删除实例
+												</DropdownMenuItem>
+											</DropdownMenuContent>
+										</DropdownMenu>
+									</div>
+
 									<CardContent>
 										<span className={cn('mb-2 font-normal before:block flex items-center gap-2 before:rounded-full before:h-1.25 before:w-1.25', currentInstanceStatusColor)}>{currentInstanceStatusText}</span>
 										<div className="flex gap-3 mb-2">
@@ -271,7 +385,94 @@ export default function Index() {
 								</Card>
 							</section>
 						)}
-						<section></section>
+						{instance?.deletedAt === null && instance.deployed && (
+							<section>
+								<Card>
+									<CardHeader className="flex gap-2 items-start">
+										<div className="flex gap-2 items-center">
+											<span className={cn('font-normal before:block flex items-center gap-2 before:rounded-full before:h-1.25 before:w-1.25', isServerRunning ? 'before:bg-green-500' : 'before:bg-red-500')}>{isServerRunning ? '在线' : '离线'}</span>
+											{isServerRunning && (
+												<>
+													<Separator orientation="vertical" />
+													<span>{serverOnlineCount}/20</span>
+												</>
+											)}
+										</div>
+										<div className="flex-1"></div>
+										{!isServerRunning && (
+											<Button
+												disabled={startServerLoading}
+												onClick={async () => {
+													setStartServerLoading(true);
+													const { data, error } = await req('/server/exec?commandType=start_server', 'get');
+													setStartServerLoading(false);
+
+													if (error !== null) {
+														toast.error('开启服务器失败：' + error);
+														return;
+													}
+
+													if (data.error !== null) {
+														toast.error('无法开启服务器：' + data.error);
+													} else {
+														toast.success('已请求开启服务器');
+													}
+												}}
+											>
+												开启服务器 {startServerLoading && <Spinner />}
+											</Button>
+										)}
+										{isServerRunning && (
+											<>
+												<Button onClick={() => setStopServerDialog(true)} variant={'destructive'}>
+													关闭服务器
+												</Button>
+											</>
+										)}
+									</CardHeader>
+									<CardContent>
+										{serverOnlineCount === 0 && (
+											<>
+												{isServerRunning ? (
+													<Empty>
+														<EmptyHeader>
+															<EmptyMedia>
+																<img draggable="false" src="/loong-speechless.jpg" />
+															</EmptyMedia>
+														</EmptyHeader>
+														<EmptyTitle>无人在线</EmptyTitle>
+														<EmptyDescription>一阵风把大家都吹走了</EmptyDescription>
+													</Empty>
+												) : (
+													<Empty>
+														<EmptyHeader>
+															<EmptyMedia>
+																<RouteOffIcon />
+															</EmptyMedia>
+															<EmptyTitle>服务器离线</EmptyTitle>
+														</EmptyHeader>
+													</Empty>
+												)}
+											</>
+										)}
+										{serverOnlineCount > 0 && serverOnlinePlayers.length > 0 && (
+											<div className="grid grid-cols-15">
+												{serverOnlinePlayers.map(name => {
+													return (
+														<Tooltip key={name}>
+															<TooltipTrigger>
+																<img draggable="false" src={`https://mc-heads.net/avatar/${name}`} className="border-2 border-white" />
+															</TooltipTrigger>
+															<TooltipContent>{name}</TooltipContent>
+														</Tooltip>
+													);
+												})}
+											</div>
+										)}
+									</CardContent>
+								</Card>
+							</section>
+						)}
 					</div>
 				</div>
 			</>

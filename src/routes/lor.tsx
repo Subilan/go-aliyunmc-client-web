@@ -12,10 +12,10 @@ import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { ArrowRightIcon } from 'lucide-react';
 import { isAuthenticated, req } from '@/lib/req';
-import toast from 'react-hot-toast';
 import { Spinner } from '@/components/ui/spinner';
 import { LS_KEY_USER_LOGIN_TOKEN } from '@/consts';
 import { useLocalStorage } from '@uidotdev/usehooks';
+import { toast } from 'sonner';
 
 export const LoginRoute = createRoute({
 	path: '/lor',
@@ -23,7 +23,7 @@ export const LoginRoute = createRoute({
 	getParentRoute: () => RootRoute,
 	async beforeLoad() {
 		if (await isAuthenticated()) {
-			toast('你已经登录了', { icon: '😄' });
+			toast.info('你已经登录了');
 			throw redirect({ to: '/' });
 		}
 	}
