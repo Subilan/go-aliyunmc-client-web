@@ -23,6 +23,7 @@ import { toast } from 'sonner';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import StopServerDialog from '@/components/dialogs/index/StopServerDialog';
 import InstanceDetailDialog from '@/components/dialogs/index/InstanceDetailDialog';
+import BackupOrArchiveDialog from '@/components/dialogs/index/BackupOrArchiveDialog';
 
 export const IndexRoute = createRoute({
 	path: '/',
@@ -171,6 +172,8 @@ export default function Index() {
 	const [serverOnlineCount, setServerOnlineCount] = useState(loaded.serverInfo?.running ? loaded.serverInfo?.data?.players.online : 0);
 	const [serverOnlinePlayers, setServerOnlinePlayers] = useState<string[]>(loaded.serverInfo?.running ? loaded.serverInfo.onlinePlayers : []);
 
+	const deployedInstanceRunning = useMemo(() => instanceStatus === 'Running' && instance?.deletedAt === null && instance.deployed, [instance, instanceStatus]);
+
 	const currentInstanceStatusColor = useMemo(() => (instanceStatus === undefined ? 'before:bg-gray-500' : instanceStatusColor[instanceStatus] || 'before:bg-gray-500'), [instance, instanceStatus]);
 	const currentInstanceStatusText = useMemo(() => (instanceStatus === undefined ? '未创建' : instanceStatusText[instanceStatus] || '未知状态'), [instanceStatus]);
 
@@ -276,12 +279,15 @@ export default function Index() {
 
 	const [stopServerDialog, setStopServerDialog] = useState(false);
 	const [instanceDetailDialog, setInstanceDetailDialog] = useState(false);
+	const [backupOrArchiveDialog, setBackupOrArchiveDialog] = useState(false);
+	const [backupOrArchive, setBackupOrArchive] = useState<'backup' | 'archive'>('backup');
 
 	return (
 		userPayload.valid && (
 			<>
 				<StopServerDialog open={stopServerDialog} setOpen={setStopServerDialog} />
-				<InstanceDetailDialog open={instanceDetailDialog} setOpen={setInstanceDetailDialog} />
+				{deployedInstanceRunning && <InstanceDetailDialog open={instanceDetailDialog} setOpen={setInstanceDetailDialog} />}
+				{deployedInstanceRunning && <BackupOrArchiveDialog type={backupOrArchive} open={backupOrArchiveDialog} setOpen={setBackupOrArchiveDialog} />}
 				<CreateInstanceDialog open={createInstanceDialog} setOpen={setCreateInstanceDialog} />
 				<DeleteInstanceDialog open={deleteInstanceDialog} setOpen={setDeleteInstanceDialog} />
 				<DeployInstanceDialog latestOutput={deployInstanceLatestOutput} status={activeDeploymentTaskStatus} setStatus={setActiveDeploymentTaskStatus} output={deployInstanceOutput} open={deployInstanceDialog} setOpen={setDeployInstanceDialog} />
@@ -342,15 +348,35 @@ export default function Index() {
 																{activeDeploymentTaskStatus === undefined ? '触发部署' : '部署状态'}
 															</DropdownMenuItem>
 														</OptTooltip>
-														<DropdownMenuItem disabled>触发服务器备份</DropdownMenuItem>
-														<DropdownMenuItem disabled>触发服务器归档</DropdownMenuItem>
-														<DropdownMenuItem disabled variant="destructive">
-															保存并删除实例
+														<OptTooltip show={!deployedInstanceRunning} content="无有效实例">
+															<DropdownMenuItem
+																disabled={!deployedInstanceRunning}
+																onClick={() => {
+																	setBackupOrArchive('backup');
+																	setBackupOrArchiveDialog(true);
+																}}
+															>
+																触发服务器备份
+															</DropdownMenuItem>
+														</OptTooltip>
+														<OptTooltip show={!deployedInstanceRunning} content="无有效实例">
+															<DropdownMenuItem
+																disabled={!deployedInstanceRunning}
+																onClick={() => {
+																	setBackupOrArchive('archive');
+																	setBackupOrArchiveDialog(true);
+																}}
+															>
+																触发服务器归档
+															</DropdownMenuItem>
+														</OptTooltip>
+														<DropdownMenuItem onClick={() => setDeleteInstanceDialog(true)} variant="destructive">
+															删除实例
 														</DropdownMenuItem>
 													</DropdownMenuSubContent>
 												</DropdownMenuSub>
-												<DropdownMenuItem onClick={() => setDeleteInstanceDialog(true)} variant="destructive">
-													删除实例
+												<DropdownMenuItem disabled variant="destructive">
+													保存并删除实例
 												</DropdownMenuItem>
 											</DropdownMenuContent>
 										</DropdownMenu>
