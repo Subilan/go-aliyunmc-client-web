@@ -1,17 +1,12 @@
 import type { DialogControl } from '@/components/dialogs/type';
 import Wrapper from '@/components/dialogs/Wrapper';
-import { Item, ItemContent, ItemDescription, ItemTitle } from '@/components/ui/item';
+import { Item, ItemDescription, ItemTitle } from '@/components/ui/item';
 import { Spinner } from '@/components/ui/spinner';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { req } from '@/lib/req';
 import times from '@/lib/times';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
-
-type QueryResult = {
-	error: string | null;
-	output: string;
-};
 
 const dirNameMappings: Record<string, string> = {
 	'/home/mc/server/archive': '总存档',
@@ -31,37 +26,27 @@ export default function InstanceDetailDialog(props: DialogControl) {
 		setScreenfetchLoading(true);
 		setSizesLoading(true);
 
-		req<QueryResult>('/server/query?queryType=screenfetch', 'get')
+		req<string>('/server/query?queryType=screenfetch', 'get')
 			.then(({ data, error }) => {
 				if (error !== null) {
 					toast.error('无法获取信息：' + error);
 					return;
 				}
 
-				if (data.error) {
-					toast.error('获取信息失败：' + data.error);
-					return;
-				}
-
-				setScreenfetch(data.output.trimEnd());
+				setScreenfetch(data.trimEnd());
 				setRefreshedAt(times.formatDatetime(new Date()));
 			})
 			.finally(() => setScreenfetchLoading(false));
 
-		req<QueryResult>('/server/query?queryType=sizes', 'get')
+		req<string>('/server/query?queryType=get_server_sizes', 'get')
 			.then(({ data, error }) => {
 				if (error !== null) {
 					toast.error('无法获取信息：' + error);
 					return;
 				}
 
-				if (data.error) {
-					toast.error('获取信息失败：' + data.error);
-					return;
-				}
-
 				setSizes(
-					data.output
+					data
 						.trimEnd()
 						.split('\n')
 						.map(x => {

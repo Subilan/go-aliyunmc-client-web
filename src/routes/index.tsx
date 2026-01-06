@@ -6,7 +6,7 @@ import { createRoute, redirect } from '@tanstack/react-router';
 import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import times from '@/lib/times';
 import DataListKv from '@/components/data-list-kv';
-import { CopyIcon, InfoIcon, MoreHorizontalIcon, RouteOffIcon } from 'lucide-react';
+import { CopyIcon, InfoIcon, MoreHorizontalIcon, RouteOffIcon, UserIcon } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { isAuthenticated, req } from '@/lib/req';
 import { cn } from '@/lib/utils';
@@ -24,6 +24,8 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import StopServerDialog from '@/components/dialogs/index/StopServerDialog';
 import InstanceDetailDialog from '@/components/dialogs/index/InstanceDetailDialog';
 import BackupOrArchiveDialog from '@/components/dialogs/index/BackupOrArchiveDialog';
+import TermDetailDialog from '@/components/dialogs/index/TermDetailDialog';
+import mchead from '@/lib/mchead';
 
 export const IndexRoute = createRoute({
 	path: '/',
@@ -201,9 +203,11 @@ export default function Index() {
 
 				case 'deployment_task_status_update': {
 					setActiveDeploymentTaskStatus(event.data);
-					setInstance(inst => (inst === undefined ? undefined : { ...inst, deployed: true }));
 					if (event.data !== 'running') {
 						streamManager.clearLastEventId();
+					}
+					if (event.data === 'success') {
+						setInstance(inst => (inst === undefined ? undefined : { ...inst, deployed: true }));
 					}
 					break;
 				}
@@ -279,6 +283,7 @@ export default function Index() {
 
 	const [stopServerDialog, setStopServerDialog] = useState(false);
 	const [instanceDetailDialog, setInstanceDetailDialog] = useState(false);
+	const [serverDetailDialog, setServerDetailDialog] = useState(false);
 	const [backupOrArchiveDialog, setBackupOrArchiveDialog] = useState(false);
 	const [backupOrArchive, setBackupOrArchive] = useState<'backup' | 'archive'>('backup');
 
@@ -288,12 +293,22 @@ export default function Index() {
 				<StopServerDialog open={stopServerDialog} setOpen={setStopServerDialog} />
 				{deployedInstanceRunning && <InstanceDetailDialog open={instanceDetailDialog} setOpen={setInstanceDetailDialog} />}
 				{deployedInstanceRunning && <BackupOrArchiveDialog type={backupOrArchive} open={backupOrArchiveDialog} setOpen={setBackupOrArchiveDialog} />}
+				<TermDetailDialog open={serverDetailDialog} setOpen={setServerDetailDialog} />
 				<CreateInstanceDialog open={createInstanceDialog} setOpen={setCreateInstanceDialog} />
 				<DeleteInstanceDialog open={deleteInstanceDialog} setOpen={setDeleteInstanceDialog} />
 				<DeployInstanceDialog latestOutput={deployInstanceLatestOutput} status={activeDeploymentTaskStatus} setStatus={setActiveDeploymentTaskStatus} output={deployInstanceOutput} open={deployInstanceDialog} setOpen={setDeployInstanceDialog} />
 				<div className="max-w-175 mx-auto my-16">
 					<div className="flex flex-col gap-5">
-						<h1 className="text-3xl">Hello, {userPayload.username}</h1>
+						<div className="flex items-center gap-3">
+							<h1 className="text-3xl">Hello, {userPayload.username}</h1>
+							<div className="flex-1" />
+							<Button variant={'outline'} onClick={() => setServerDetailDialog(true)}>
+								周目信息
+							</Button>
+							<Button size={'icon'}>
+								<UserIcon />
+							</Button>
+						</div>
 						{activeDeploymentTaskStatus === 'running' && (
 							<Item variant={'outline'}>
 								<ItemMedia>
@@ -370,13 +385,10 @@ export default function Index() {
 																触发服务器归档
 															</DropdownMenuItem>
 														</OptTooltip>
-														<DropdownMenuItem onClick={() => setDeleteInstanceDialog(true)} variant="destructive">
-															删除实例
-														</DropdownMenuItem>
 													</DropdownMenuSubContent>
 												</DropdownMenuSub>
-												<DropdownMenuItem disabled variant="destructive">
-													保存并删除实例
+												<DropdownMenuItem onClick={() => setDeleteInstanceDialog(true)} variant="destructive">
+													删除实例
 												</DropdownMenuItem>
 											</DropdownMenuContent>
 										</DropdownMenu>
@@ -487,7 +499,7 @@ export default function Index() {
 													return (
 														<Tooltip key={name}>
 															<TooltipTrigger>
-																<img draggable="false" src={`https://mc-heads.net/avatar/${name}`} className="border-2 border-white" />
+																<img draggable="false" src={mchead(name)} className="border-2 border-white" />
 															</TooltipTrigger>
 															<TooltipContent>{name}</TooltipContent>
 														</Tooltip>

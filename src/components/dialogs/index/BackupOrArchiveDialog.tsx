@@ -5,18 +5,10 @@ import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
 import { req } from '@/lib/req';
 import times from '@/lib/times';
+import type { CommandExec } from '@/types/CommandExec';
 import { CheckCircleIcon, XCircleIcon } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
-
-type CommandExec = {
-	id: string;
-	by: number;
-	type: 'backup_worlds' | 'archive_server';
-	createdAt: string;
-	updatedAt: string;
-	status: 'success' | 'error' | 'created';
-};
 
 type Empty = {
 	_empty: true;
@@ -62,17 +54,13 @@ export default function BackupOrArchiveDialog(props: DialogControl & { type: 'ba
 						onClick={async () => {
 							const commandType = props.type === 'backup' ? 'backup_worlds' : 'archive_server';
 							setLoading(true);
-							const { data, error } = await req('/server/exec?commandType=' + commandType, 'get');
+							const { error } = await req('/server/exec?commandType=' + commandType, 'get');
 							setLoading(false);
 
 							if (error !== null) {
 								toast.error('执行失败：' + error);
-								return;
-							}
-
-							if (data.error !== null) {
 								setStatus('error');
-								setError(data.error);
+								setError(error);
 							} else {
 								const latest = await fetchLatestRecordOfType(props.type);
 								setLatestRecord(latest);
@@ -95,10 +83,10 @@ export default function BackupOrArchiveDialog(props: DialogControl & { type: 'ba
 				<Alert>
 					<Spinner />
 					<AlertTitle>{typeVerb}中</AlertTitle>
-					<AlertDescription>过程至多持续 1 分钟</AlertDescription>
+					<AlertDescription>大约需要 1~2 分钟</AlertDescription>
 				</Alert>
 			) : status === '' ? (
-				<p>要现在执行吗？过程可能持续至多 1 分钟。</p>
+				<p>要现在执行吗？过程可能持续 1~2 分钟。</p>
 			) : (
 				<Alert>
 					{status === 'success' ? <CheckCircleIcon /> : <XCircleIcon />}

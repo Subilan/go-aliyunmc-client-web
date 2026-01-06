@@ -1,6 +1,3 @@
-
-import { Checkbox } from '@/components/ui/checkbox';
-import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import type { DialogControl } from '@/components/dialogs/type';
 import { useState } from 'react';
@@ -8,9 +5,11 @@ import { req } from '@/lib/req';
 import { toast } from 'sonner';
 import { Spinner } from '@/components/ui/spinner';
 import Wrapper from '@/components/dialogs/Wrapper';
+import { FieldGroup, FieldSet, FieldContent, FieldTitle, FieldLabel, FieldDescription, Field } from '@/components/ui/field';
+import { RadioGroupItem, RadioGroup } from '@/components/ui/radio-group';
 
 export default function DeleteInstanceDialog(props: DialogControl) {
-	const [force, setForce] = useState(false);
+	const [deleteMode, setDeleteMode] = useState<'safe' | 'force'>('safe');
 	const [loading, setLoading] = useState(false);
 
 	return (
@@ -26,7 +25,7 @@ export default function DeleteInstanceDialog(props: DialogControl) {
 							variant={'destructive'}
 							onClick={async () => {
 								setLoading(true);
-								const { error } = await req(`/instance?force=${force ? 1 : 0}&forceStop=${force ? 1 : 0}`, 'DELETE');
+								const { error } = await req(`/instance?${deleteMode === 'force' ? 'force=1' : 'archiveAndForce=1'}`, 'DELETE');
 								setLoading(false);
 
 								if (error !== null) {
@@ -43,14 +42,31 @@ export default function DeleteInstanceDialog(props: DialogControl) {
 					</>
 				}
 			>
-				<p>确认要删除实例吗？可能导致无法预料的后果和数据丢失。请只在必要的情况下执行。</p>
-				<div className="flex items-start gap-3">
-					<Checkbox id="forceDelete" defaultValue={'false'} onCheckedChange={v => setForce(!!v)} />
-					<div className="grid gap-2">
-						<Label htmlFor="forceDelete">强制删除</Label>
-						<p className="text-muted-foreground text-sm">忽略实例运行情况，直接断电并删除。请谨慎使用。</p>
-					</div>
-				</div>
+				<p>确认要删除实例吗？此操作不可撤销。请选择删除的方式。</p>
+				<FieldGroup>
+					<FieldSet>
+						<RadioGroup value={deleteMode} onValueChange={v => setDeleteMode(v as 'safe' | 'force')}>
+							<FieldLabel htmlFor="safeDelete">
+								<Field orientation="horizontal">
+									<FieldContent>
+										<FieldTitle>安全删除</FieldTitle>
+										<FieldDescription>关闭服务器并归档数据后，删除实例。</FieldDescription>
+									</FieldContent>
+									<RadioGroupItem value="safe" id="safeDelete" />
+								</Field>
+							</FieldLabel>
+							<FieldLabel htmlFor="forceDelete">
+								<Field orientation="horizontal">
+									<FieldContent>
+										<FieldTitle>强制删除</FieldTitle>
+										<FieldDescription>忽略服务器状态，执行断电操作并删除实例。请谨慎选择。</FieldDescription>
+									</FieldContent>
+									<RadioGroupItem value="force" id="forceDelete" />
+								</Field>
+							</FieldLabel>
+						</RadioGroup>
+					</FieldSet>
+				</FieldGroup>
 			</Wrapper>
 		</>
 	);

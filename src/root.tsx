@@ -7,12 +7,13 @@ import { LoginRoute } from '@/routes/lor';
 import { createRootRoute, createRouter, RouterProvider } from '@tanstack/react-router';
 import { useContext, useEffect, useState } from 'react';
 import { PreviewRoute } from '@/routes/preview';
-import ErrorBoundary from '@/error';
+import ErrorPage from '@/error';
+import { ErrorBoundary } from 'react-error-boundary';
 import { StreamManagerContext } from '@/contexts/StreamManagerContext';
 import { Toaster } from '@/components/ui/sonner';
 
 export const RootRoute = createRootRoute({
-	errorComponent: ErrorBoundary
+	errorComponent: ErrorPage
 });
 
 declare module '@tanstack/react-router' {
@@ -76,12 +77,12 @@ export function Root() {
 	}, [userLoginToken]);
 
 	return (
-		<>
-			<Toaster position='top-center' duration={2000}/>
+		<ErrorBoundary FallbackComponent={ErrorPage}>
+			<Toaster position="top-center" duration={2000} />
 			<UserPayloadContext.Provider value={userPayload}>
 				<RouterProvider router={router} />
 			</UserPayloadContext.Provider>
-		</>
+		</ErrorBoundary>
 	);
 }
 
