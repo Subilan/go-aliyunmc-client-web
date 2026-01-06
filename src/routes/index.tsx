@@ -1,9 +1,9 @@
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { UserPayloadContext } from '@/contexts/UserPayloadContext';
 import { RootRoute, router } from '@/root';
 import { createRoute, redirect } from '@tanstack/react-router';
-import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { useContext, useEffect, useMemo, useState } from 'react';
 import times from '@/lib/times';
 import DataListKv from '@/components/data-list-kv';
 import { CopyIcon, InfoIcon, MoreHorizontalIcon, RouteOffIcon, UserIcon } from 'lucide-react';
@@ -12,7 +12,7 @@ import { isAuthenticated, req } from '@/lib/req';
 import { cn } from '@/lib/utils';
 import { Item, ItemContent, ItemMedia, ItemTitle, ItemDescription, ItemActions } from '@/components/ui/item';
 import { StreamManagerContext } from '@/contexts/StreamManagerContext';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSub, DropdownMenuSubContent, DropdownMenuSubTrigger, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import CreateInstanceDialog from '@/components/dialogs/index/CreateInstanceDialog';
 import DeleteInstanceDialog from '@/components/dialogs/index/DeleteInstanceDialog';
 import DeployInstanceDialog from '@/components/dialogs/index/DeployInstanceDialog';
@@ -22,9 +22,8 @@ import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/
 import { toast } from 'sonner';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import StopServerDialog from '@/components/dialogs/index/StopServerDialog';
-import InstanceDetailDialog from '@/components/dialogs/index/InstanceDetailDialog';
 import BackupOrArchiveDialog from '@/components/dialogs/index/BackupOrArchiveDialog';
-import TermDetailDialog from '@/components/dialogs/index/TermDetailDialog';
+import DetailDialog from '@/components/dialogs/index/DetailDialog';
 import mchead from '@/lib/mchead';
 
 export const IndexRoute = createRoute({
@@ -282,7 +281,6 @@ export default function Index() {
 	const [startServerLoading, setStartServerLoading] = useState(false);
 
 	const [stopServerDialog, setStopServerDialog] = useState(false);
-	const [instanceDetailDialog, setInstanceDetailDialog] = useState(false);
 	const [serverDetailDialog, setServerDetailDialog] = useState(false);
 	const [backupOrArchiveDialog, setBackupOrArchiveDialog] = useState(false);
 	const [backupOrArchive, setBackupOrArchive] = useState<'backup' | 'archive'>('backup');
@@ -291,9 +289,8 @@ export default function Index() {
 		userPayload.valid && (
 			<>
 				<StopServerDialog open={stopServerDialog} setOpen={setStopServerDialog} />
-				{deployedInstanceRunning && <InstanceDetailDialog open={instanceDetailDialog} setOpen={setInstanceDetailDialog} />}
 				{deployedInstanceRunning && <BackupOrArchiveDialog type={backupOrArchive} open={backupOrArchiveDialog} setOpen={setBackupOrArchiveDialog} />}
-				<TermDetailDialog open={serverDetailDialog} setOpen={setServerDetailDialog} />
+				<DetailDialog deployedInstanceRunning={deployInstanceDialog} open={serverDetailDialog} setOpen={setServerDetailDialog} />
 				<CreateInstanceDialog open={createInstanceDialog} setOpen={setCreateInstanceDialog} />
 				<DeleteInstanceDialog open={deleteInstanceDialog} setOpen={setDeleteInstanceDialog} />
 				<DeployInstanceDialog latestOutput={deployInstanceLatestOutput} status={activeDeploymentTaskStatus} setStatus={setActiveDeploymentTaskStatus} output={deployInstanceOutput} open={deployInstanceDialog} setOpen={setDeployInstanceDialog} />
@@ -341,11 +338,6 @@ export default function Index() {
 							<section>
 								<Card className="relative">
 									<div className="absolute top-6 right-6 flex items-center gap-3">
-										<OptTooltip show={!instance.deployed} content="请先部署实例">
-											<Button variant={'outline'} onClick={() => setInstanceDetailDialog(true)} disabled={!instance.deployed}>
-												详情
-											</Button>
-										</OptTooltip>
 										<DropdownMenu>
 											<DropdownMenuTrigger asChild>
 												<Button variant={'secondary'} size={'icon'}>
@@ -353,40 +345,33 @@ export default function Index() {
 												</Button>
 											</DropdownMenuTrigger>
 											<DropdownMenuContent>
-												<DropdownMenuItem disabled>开启</DropdownMenuItem>
-												<DropdownMenuItem disabled>关闭</DropdownMenuItem>
-												<DropdownMenuSub>
-													<DropdownMenuSubTrigger>高级</DropdownMenuSubTrigger>
-													<DropdownMenuSubContent>
-														<OptTooltip show={instanceStatus !== 'Running' || instance.deployed} content="实例未运行或已部署">
-															<DropdownMenuItem disabled={instanceStatus !== 'Running' || instance.deployed} onClick={() => setDeployInstanceDialog(true)}>
-																{activeDeploymentTaskStatus === undefined ? '触发部署' : '部署状态'}
-															</DropdownMenuItem>
-														</OptTooltip>
-														<OptTooltip show={!deployedInstanceRunning} content="无有效实例">
-															<DropdownMenuItem
-																disabled={!deployedInstanceRunning}
-																onClick={() => {
-																	setBackupOrArchive('backup');
-																	setBackupOrArchiveDialog(true);
-																}}
-															>
-																触发服务器备份
-															</DropdownMenuItem>
-														</OptTooltip>
-														<OptTooltip show={!deployedInstanceRunning} content="无有效实例">
-															<DropdownMenuItem
-																disabled={!deployedInstanceRunning}
-																onClick={() => {
-																	setBackupOrArchive('archive');
-																	setBackupOrArchiveDialog(true);
-																}}
-															>
-																触发服务器归档
-															</DropdownMenuItem>
-														</OptTooltip>
-													</DropdownMenuSubContent>
-												</DropdownMenuSub>
+												<OptTooltip show={instanceStatus !== 'Running' || instance.deployed} content="实例未运行或已部署">
+													<DropdownMenuItem disabled={instanceStatus !== 'Running' || instance.deployed} onClick={() => setDeployInstanceDialog(true)}>
+														{activeDeploymentTaskStatus === undefined ? '触发部署' : '部署状态'}
+													</DropdownMenuItem>
+												</OptTooltip>
+												<OptTooltip show={!deployedInstanceRunning} content="无有效实例">
+													<DropdownMenuItem
+														disabled={!deployedInstanceRunning}
+														onClick={() => {
+															setBackupOrArchive('backup');
+															setBackupOrArchiveDialog(true);
+														}}
+													>
+														触发服务器备份
+													</DropdownMenuItem>
+												</OptTooltip>
+												<OptTooltip show={!deployedInstanceRunning} content="无有效实例">
+													<DropdownMenuItem
+														disabled={!deployedInstanceRunning}
+														onClick={() => {
+															setBackupOrArchive('archive');
+															setBackupOrArchiveDialog(true);
+														}}
+													>
+														触发服务器归档
+													</DropdownMenuItem>
+												</OptTooltip>
 												<DropdownMenuItem onClick={() => setDeleteInstanceDialog(true)} variant="destructive">
 													删除实例
 												</DropdownMenuItem>
