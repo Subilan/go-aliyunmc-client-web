@@ -19,9 +19,8 @@ import DeployInstanceDialog from '@/components/dialogs/index/DeployInstanceDialo
 import OptTooltip from '@/components/optional-tooltip';
 import { Spinner } from '@/components/ui/spinner';
 import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty';
-import { toast } from 'sonner';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import StopServerDialog from '@/components/dialogs/index/StopServerDialog';
+import StartOrStopServerDialog from '@/components/dialogs/index/StartOrStopServerDialog';
 import BackupOrArchiveDialog from '@/components/dialogs/index/BackupOrArchiveDialog';
 import DetailDialog from '@/components/dialogs/index/DetailDialog';
 import mchead from '@/lib/mchead';
@@ -230,15 +229,16 @@ export default function Index() {
 
 	const [startServerLoading, setStartServerLoading] = useState(false);
 
-	const [stopServerDialog, setStopServerDialog] = useState(false);
+	const [startOrStopServerDialog, setStartOrStopServerDialog] = useState(false);
 	const [serverDetailDialog, setServerDetailDialog] = useState(false);
 	const [backupOrArchiveDialog, setBackupOrArchiveDialog] = useState(false);
 	const [backupOrArchive, setBackupOrArchive] = useState<'backup' | 'archive'>('backup');
+	const [startOrStop, setStartOrStop] = useState<'start' | 'stop'>('start');
 
 	return (
 		userPayload.valid && (
 			<>
-				<StopServerDialog open={stopServerDialog} setOpen={setStopServerDialog} />
+				{deployedInstanceRunning && <StartOrStopServerDialog type={startOrStop} open={startOrStopServerDialog} setOpen={setStartOrStopServerDialog} />}
 				{deployedInstanceRunning && <BackupOrArchiveDialog type={backupOrArchive} open={backupOrArchiveDialog} setOpen={setBackupOrArchiveDialog} />}
 				<DetailDialog deployedInstanceRunning={deployedInstanceRunning} open={serverDetailDialog} setOpen={setServerDetailDialog} />
 				<CreateInstanceDialog open={createInstanceDialog} setOpen={setCreateInstanceDialog} />
@@ -376,16 +376,8 @@ export default function Index() {
 											<Button
 												disabled={startServerLoading}
 												onClick={async () => {
-													setStartServerLoading(true);
-													const { data, error } = await req('/server/exec?commandType=start_server', 'get');
-													setStartServerLoading(false);
-
-													if (error !== null) {
-														toast.error('开启服务器失败：' + error);
-														return;
-													}
-
-													toast.success('已请求开启服务器');
+													setStartOrStop('start');
+													setStartOrStopServerDialog(true);
 												}}
 											>
 												开启服务器 {startServerLoading && <Spinner />}
@@ -393,7 +385,13 @@ export default function Index() {
 										)}
 										{isServerRunning && (
 											<>
-												<Button onClick={() => setStopServerDialog(true)} variant={'destructive'}>
+												<Button
+													onClick={() => {
+														setStartOrStop('stop');
+														setStartOrStopServerDialog(true);
+													}}
+													variant={'destructive'}
+												>
 													关闭服务器
 												</Button>
 											</>
