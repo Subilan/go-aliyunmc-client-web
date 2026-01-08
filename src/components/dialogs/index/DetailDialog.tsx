@@ -22,7 +22,7 @@ const dirNameMappings: Record<string, string> = {
 
 function DetailEmpty() {
 	return (
-		<Empty className='border'>
+		<Empty className="border">
 			<EmptyMedia>
 				<ServerOffIcon />
 			</EmptyMedia>
@@ -32,6 +32,32 @@ function DetailEmpty() {
 			</EmptyHeader>
 		</Empty>
 	);
+}
+
+async function fetchServerBackups() {
+	const { data, error } = await req<CommandExec[]>('/server/backups', 'get');
+
+	return error === null ? data : undefined;
+}
+
+async function fetchServerQueryScreenfetch() {
+	const { data, error } = await req<string>('/server/query?queryType=screenfetch', 'get');
+
+	return error === null ? data.trimEnd() : undefined;
+}
+
+async function fetchServerQueryServerSizes() {
+	const { data, error } = await req<string>('/server/query?queryType=get_server_sizes', 'get');
+
+	return error === null
+		? data
+				.trimEnd()
+				.split('\n')
+				.map(x => {
+					const pair = x.split('\t');
+					return { size: pair[0], dir: pair[1] };
+				})
+		: undefined;
 }
 
 export default function DetailDialog(props: DialogControl & { deployedInstanceRunning: boolean }) {
@@ -53,50 +79,32 @@ export default function DetailDialog(props: DialogControl & { deployedInstanceRu
 			setScreenfetchLoading(true);
 			setSizesLoading(true);
 
-			req<string>('/server/query?queryType=screenfetch', 'get')
-				.then(({ data, error }) => {
-					if (error !== null) {
-						toast.error('无法获取信息：' + error);
-						return;
-					}
-
-					setScreenfetch(data.trimEnd());
-					setRefreshedAt(times.formatDatetime(new Date()));
-				})
-				.finally(() => setScreenfetchLoading(false));
-
-			req<string>('/server/query?queryType=get_server_sizes', 'get')
-				.then(({ data, error }) => {
-					if (error !== null) {
-						toast.error('无法获取信息：' + error);
-						return;
-					}
-
-					setSizes(
-						data
-							.trimEnd()
-							.split('\n')
-							.map(x => {
-								const pair = x.split('\t');
-								return { size: pair[0], dir: pair[1] };
-							})
-					);
-				})
-				.finally(() => setSizesLoading(false));
+			Promise.all([
+				fetchServerQueryScreenfetch()
+					.then(data => {
+						if (data) {
+							setScreenfetch(data);
+						}
+					})
+					.finally(() => setScreenfetchLoading(false)),
+				fetchServerQueryServerSizes()
+					.then(data => {
+						if (data) {
+							setSizes(data);
+						}
+					})
+					.finally(() => setSizesLoading(false))
+			]).finally(() => setRefreshedAt(times.formatDatetime(new Date())));
 		}
 	}, [props.deployedInstanceRunning]);
 
 	useEffect(() => {
 		setBackupInfoLoading(true);
-
-		req<CommandExec[]>('/server/backups', 'get')
-			.then(({ data, error }) => {
-				if (error !== null) {
-					toast.error('无法获取信息：' + error);
-					return;
+		fetchServerBackups()
+			.then(data => {
+				if (data) {
+					setBackupInfo(data);
 				}
-				setBackupInfo(data);
-				setRefreshedAt(times.formatDatetime(new Date()));
 			})
 			.finally(() => setBackupInfoLoading(false));
 	}, []);
@@ -105,11 +113,11 @@ export default function DetailDialog(props: DialogControl & { deployedInstanceRu
 		<Wrapper open={props.open} setOpen={props.setOpen} title="周目信息" className="max-w-175!">
 			{refreshedAt.length > 0 && <p>数据更新于 {refreshedAt}</p>}
 			<Tabs defaultValue="configuration">
-				<TabsList className='mb-2'>
+				<TabsList className="mb-2">
 					<TabsTrigger value="configuration">游戏配置</TabsTrigger>
-					<TabsTrigger value="backupInfo">存档备份情况</TabsTrigger>
+					<TabsTrigger value="backupInfo">备份情况</TabsTrigger>
 					<TabsTrigger value="players">周目玩家</TabsTrigger>
-					<TabsTrigger value="screenfetch">实例概况</TabsTrigger>
+					<TabsTrigger value="screenfetch">Screenfetch</TabsTrigger>
 					<TabsTrigger value="sizes">存档大小</TabsTrigger>
 				</TabsList>
 				<TabsContent value="configuration">

@@ -27,12 +27,8 @@ export default function StopServerDialog(props: DialogControl) {
 							return;
 						}
 
-						if (data.error !== null) {
-							toast.error('无法关闭服务器：' + data.error);
-						} else {
-							toast.success('已请求关闭服务器');
-							props.setOpen(false);
-						}
+						toast.success('已请求关闭服务器');
+						props.setOpen(false);
 					}}
 					variant={'destructive'}
 				>

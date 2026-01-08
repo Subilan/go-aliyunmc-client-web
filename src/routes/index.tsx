@@ -25,6 +25,8 @@ import StopServerDialog from '@/components/dialogs/index/StopServerDialog';
 import BackupOrArchiveDialog from '@/components/dialogs/index/BackupOrArchiveDialog';
 import DetailDialog from '@/components/dialogs/index/DetailDialog';
 import mchead from '@/lib/mchead';
+import type { ServerInfo } from '@/types/ServerInfo';
+import type { Instance, InstanceStatus } from '@/types/Instance';
 
 export const IndexRoute = createRoute({
 	path: '/',
@@ -36,103 +38,40 @@ export const IndexRoute = createRoute({
 		}
 	},
 	async loader() {
-		const instanceData = await fetchActiveOrLatestInstanceAndStatus();
-		const taskData = await fetchActiveDeploymentTask();
-		const serverInfo = await fetchServerInfo();
 		return {
-			...instanceData,
-			activeDeploymentTask: taskData,
-			serverInfo
+			instance: await fetchActiveOrLatestInstance(),
+			instanceStatus: await fetchActiveInstanceStatus(),
+			activeDeploymentTaskStatus: await fetchActiveDeploymentTaskStatus(),
+			serverInfo: await fetchServerInfo()
 		};
 	}
 });
 
-type ServerInfo =
-	| {
-			running: true;
-			data: {
-				version: {
-					name: {
-						raw: string;
-						clean: string;
-						html: string;
-					};
-					protocol: number;
-				};
-				players: {
-					max: number;
-					online: number;
-					sample: Array<{
-						id: string;
-						name: {
-							raw: string;
-							clean: string;
-							html: string;
-						};
-					}>;
-				};
-				motd: {
-					raw: string;
-					clean: string;
-					html: string;
-				};
-				favicon: any;
-				srv_record: any;
-				mods: any;
-			};
-			onlinePlayers: string[];
-	  }
-	| { running: false };
-
 async function fetchServerInfo() {
 	const { data, error } = await req<ServerInfo>('/server/info', 'get');
 
-	if (error !== null) {
-		return undefined;
-	}
-
-	return data;
+	return error === null ? data : undefined;
 }
 
-async function fetchActiveDeploymentTask() {
-	let { data, error } = await req('/task?type=instance_deployment', 'get');
+async function fetchActiveDeploymentTaskStatus() {
+	const { data, error } = await req('/task?type=instance_deployment', 'get');
 
-	if (error !== null) {
-		return undefined;
-	}
-
-	return data.status;
+	return error === null ? data.status : undefined;
 }
 
-type Instance = {
-	instanceId: string;
-	instanceType: string;
-	regionId: string;
-	zoneId: string;
-	deletedAt: string | null;
-	createdAt: string;
-	deployed: boolean;
-	ip: string | null;
-};
+async function fetchActiveOrLatestInstance() {
+	const { data, error } = await req<Instance>('/active-or-latest-instance', 'GET');
 
-type InstanceStatus = {
-	instanceId: string;
-	instanceStatus: '__created__' | 'Pending' | 'Starting' | 'Running' | 'Stopping' | 'Stopped' | 'unable_to_get';
-	updatedAt: string;
-};
-
-async function fetchActiveOrLatestInstanceAndStatus() {
-	let { data: activeOrLatestInstance, error } = await req<{ instance: Instance; status: InstanceStatus }>('/active-or-latest-instance', 'GET');
-
-	if (error !== null) {
-		return { instance: undefined, instanceStatus: undefined };
-	}
-
-	return { instance: activeOrLatestInstance?.instance, instanceStatus: activeOrLatestInstance?.status.instanceStatus };
+	return error === null ? data : undefined;
 }
 
-const instanceStatusColor: Record<InstanceStatus['instanceStatus'], string> = {
-	__created__: 'before:bg-gray-500',
+async function fetchActiveInstanceStatus() {
+	const { data, error } = await req<InstanceStatus>('/instance-status', 'get');
+
+	return error === null ? data : undefined;
+}
+
+const instanceStatusColor: Record<InstanceStatus, string> = {
 	Pending: 'before:bg-amber-500',
 	Starting: 'before:bg-amber-500',
 	Running: 'before:bg-green-500',
@@ -141,8 +80,7 @@ const instanceStatusColor: Record<InstanceStatus['instanceStatus'], string> = {
 	unable_to_get: 'before:bg-red-500'
 };
 
-const instanceStatusText: Record<InstanceStatus['instanceStatus'], string> = {
-	__created__: '已创建',
+const instanceStatusText: Record<InstanceStatus, string> = {
 	Pending: '准备中',
 	Starting: '启动中',
 	Running: '运行中',
@@ -164,7 +102,7 @@ export default function Index() {
 
 	const [instance, setInstance] = useState(loaded.instance);
 	const [instanceStatus, setInstanceStatus] = useState(loaded.instanceStatus);
-	const [activeDeploymentTaskStatus, setActiveDeploymentTaskStatus] = useState(loaded.activeDeploymentTask);
+	const [activeDeploymentTaskStatus, setActiveDeploymentTaskStatus] = useState(loaded.activeDeploymentTaskStatus);
 	const [serverInfo, setServerInfo] = useState(loaded.serverInfo);
 	// const [isServerRunning, setIsServerRunning] = useState(true);
 	// const [serverOnlineCount, setServerOnlineCount] = useState(2);
@@ -175,8 +113,8 @@ export default function Index() {
 
 	const deployedInstanceRunning = useMemo(() => instanceStatus === 'Running' && instance?.deletedAt === null && instance.deployed, [instance, instanceStatus]);
 
-	const currentInstanceStatusColor = useMemo(() => (instanceStatus === undefined ? 'before:bg-gray-500' : instanceStatusColor[instanceStatus] || 'before:bg-gray-500'), [instance, instanceStatus]);
-	const currentInstanceStatusText = useMemo(() => (instanceStatus === undefined ? '未创建' : instanceStatusText[instanceStatus] || '未知状态'), [instanceStatus]);
+	const currentInstanceStatusColor = useMemo(() => (instanceStatus === undefined ? 'before:bg-gray-500' : instanceStatus ? instanceStatusColor[instanceStatus] : 'before:bg-gray-500'), [instance, instanceStatus]);
+	const currentInstanceStatusText = useMemo(() => (instanceStatus === undefined ? '未创建' : instanceStatus ? instanceStatusText[instanceStatus] : '未知状态'), [instanceStatus]);
 
 	const streamManager = useContext(StreamManagerContext);
 
@@ -196,7 +134,13 @@ export default function Index() {
 				}
 
 				case 'active_ip_update': {
-					setInstance(inst => (inst === undefined ? undefined : { ...inst, ip: event.data }));
+					setInstance(inst => {
+						if (!inst) return inst;
+						return {
+							...inst,
+							ip: event.data
+						};
+					});
 					break;
 				}
 
@@ -206,7 +150,13 @@ export default function Index() {
 						streamManager.clearLastEventId();
 					}
 					if (event.data === 'success') {
-						setInstance(inst => (inst === undefined ? undefined : { ...inst, deployed: true }));
+						setInstance(inst => {
+							if (!inst) return inst;
+							return {
+								...inst,
+								deployed: true
+							};
+						});
 					}
 					break;
 				}
@@ -219,8 +169,8 @@ export default function Index() {
 				case 'notify': {
 					switch (event.data) {
 						case 'instance_deleted': {
-							const fetched = await fetchActiveOrLatestInstanceAndStatus();
-							setInstance(fetched.instance);
+							const fetched = await fetchActiveOrLatestInstance();
+							setInstance(fetched);
 							streamManager.clearLastEventId();
 							break;
 						}
@@ -290,7 +240,7 @@ export default function Index() {
 			<>
 				<StopServerDialog open={stopServerDialog} setOpen={setStopServerDialog} />
 				{deployedInstanceRunning && <BackupOrArchiveDialog type={backupOrArchive} open={backupOrArchiveDialog} setOpen={setBackupOrArchiveDialog} />}
-				<DetailDialog deployedInstanceRunning={deployInstanceDialog} open={serverDetailDialog} setOpen={setServerDetailDialog} />
+				<DetailDialog deployedInstanceRunning={deployedInstanceRunning} open={serverDetailDialog} setOpen={setServerDetailDialog} />
 				<CreateInstanceDialog open={createInstanceDialog} setOpen={setCreateInstanceDialog} />
 				<DeleteInstanceDialog open={deleteInstanceDialog} setOpen={setDeleteInstanceDialog} />
 				<DeployInstanceDialog latestOutput={deployInstanceLatestOutput} status={activeDeploymentTaskStatus} setStatus={setActiveDeploymentTaskStatus} output={deployInstanceOutput} open={deployInstanceDialog} setOpen={setDeployInstanceDialog} />
@@ -435,11 +385,7 @@ export default function Index() {
 														return;
 													}
 
-													if (data.error !== null) {
-														toast.error('无法开启服务器：' + data.error);
-													} else {
-														toast.success('已请求开启服务器');
-													}
+													toast.success('已请求开启服务器');
 												}}
 											>
 												开启服务器 {startServerLoading && <Spinner />}

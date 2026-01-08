@@ -6,7 +6,7 @@ export async function isAuthenticated() {
 	return error === null;
 }
 
-export async function req<T = any>(path: string, method: RequestInit['method'], body?: Record<string, any>): Promise<{ error: string; data: null } | { error: null; data: T }> {
+export async function req<T = any>(path: string, method: RequestInit['method'], body?: Record<string, any>): Promise<{ error: string; data: null; } | { error: null; data: T; }> {
 	const token = localStorage.getItem(LS_KEY_USER_LOGIN_TOKEN)?.slice(1, -1); // 移除添加的双引号
 	const result = await fetch('http://127.0.0.1:33791' + path, {
 		method,
