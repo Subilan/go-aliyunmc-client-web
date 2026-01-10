@@ -26,18 +26,20 @@ const routeTree = RootRoute.addChildren([IndexRoute, LoginRoute, PreviewRoute]);
 
 export const router = createRouter({ routeTree });
 
-const EmptyUnloadedUserPayload = {
+const EmptyUnloadedUserPayload: UserPayload = {
 	username: '',
 	user_id: 0,
 	valid: false,
-	loaded: false
+	loaded: false,
+	role: 'user'
 };
 
-const EmptyLoadedUserPayload = {
+const EmptyLoadedUserPayload: UserPayload = {
 	username: '',
 	user_id: 0,
 	valid: false,
-	loaded: true
+	loaded: true,
+	role: 'user'
 };
 
 async function checkAndFetchUserPayload() {
@@ -58,7 +60,6 @@ async function checkAndFetchUserPayload() {
 
 export function Root() {
 	const [userPayload, setUserPayload] = useState<UserPayload>(EmptyUnloadedUserPayload);
-
 	const [userLoginToken] = useLocalStorage<string>(LS_KEY_USER_LOGIN_TOKEN, '');
 
 	useEffect(() => {

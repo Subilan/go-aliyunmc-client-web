@@ -4,7 +4,7 @@ import type { ReactNode } from 'react';
 export default function OptTooltip(props: { show: boolean; content: string; children?: ReactNode }) {
 	if (props.show) {
 		return (
-			<Tooltip >
+			<Tooltip>
 				<TooltipTrigger asChild>
 					<div tabIndex={0}>{props.children}</div>
 				</TooltipTrigger>

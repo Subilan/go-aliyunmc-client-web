@@ -1,5 +1,5 @@
-import { RootRoute } from '@/root';
-import { createRoute, redirect } from '@tanstack/react-router';
+import { RootRoute, router } from '@/root';
+import { createRoute, Navigate, redirect, useNavigate } from '@tanstack/react-router';
 import { useCallback, useState } from 'react';
 import { z } from 'zod';
 import { Controller, useForm } from 'react-hook-form';
@@ -109,6 +109,7 @@ export default function Lor() {
 
 		setUserLoginToken(token);
 		toast.success('已登录');
+		router.navigate({ to: '/' });
 	}, []);
 
 	const [registerLoading, setRegisterLoading] = useState(false);

@@ -26,6 +26,8 @@ import DetailDialog from '@/components/dialogs/index/DetailDialog';
 import mchead from '@/lib/mchead';
 import type { ServerInfo } from '@/types/ServerInfo';
 import type { Instance, InstanceStatus } from '@/types/Instance';
+import ProfileDialog from '@/components/dialogs/index/ProfileDialog';
+import OptDropdownMenuItem from '@/components/optional-dropdown-menu-item';
 
 export const IndexRoute = createRoute({
 	path: '/',
@@ -230,8 +232,12 @@ export default function Index() {
 	const [startOrStopServerDialog, setStartOrStopServerDialog] = useState(false);
 	const [serverDetailDialog, setServerDetailDialog] = useState(false);
 	const [backupOrArchiveDialog, setBackupOrArchiveDialog] = useState(false);
+	const [profileDialog, setProfileDialog] = useState(false);
 	const [backupOrArchive, setBackupOrArchive] = useState<'backup' | 'archive'>('backup');
 	const [startOrStop, setStartOrStop] = useState<'start' | 'stop'>('start');
+
+	const condDeployedInstanceRunning = useMemo(() => ({ cond: !deployedInstanceRunning, message: '无有效实例' }), [deployedInstanceRunning]);
+	const condAdmin = useMemo(() => ({ cond: userPayload.role !== 'admin', message: '权限不足' }), [userPayload]);
 
 	return (
 		userPayload.valid && (
@@ -242,6 +248,7 @@ export default function Index() {
 				<CreateInstanceDialog open={createInstanceDialog} setOpen={setCreateInstanceDialog} />
 				<DeleteInstanceDialog deployedInstanceRunning={deployedInstanceRunning} open={deleteInstanceDialog} setOpen={setDeleteInstanceDialog} />
 				<DeployInstanceDialog latestOutput={deployInstanceLatestOutput} status={activeDeploymentTaskStatus} setStatus={setActiveDeploymentTaskStatus} output={deployInstanceOutput} open={deployInstanceDialog} setOpen={setDeployInstanceDialog} />
+				<ProfileDialog open={profileDialog} setOpen={setProfileDialog} />
 				<div className="max-w-175 mx-auto my-16">
 					<div className="flex flex-col gap-5">
 						<div className="flex items-center gap-3">
@@ -250,9 +257,7 @@ export default function Index() {
 							<Button variant={'outline'} onClick={() => setServerDetailDialog(true)}>
 								周目信息
 							</Button>
-							<Button size={'icon'}>
-								<UserIcon />
-							</Button>
+							<Button onClick={() => setProfileDialog(true)}>我的账号</Button>
 						</div>
 						{activeDeploymentTaskStatus === 'running' && (
 							<Item variant={'outline'}>
@@ -293,36 +298,30 @@ export default function Index() {
 												</Button>
 											</DropdownMenuTrigger>
 											<DropdownMenuContent>
-												<OptTooltip show={instanceStatus !== 'Running' || instance.deployed} content="实例未运行或已部署">
-													<DropdownMenuItem disabled={instanceStatus !== 'Running' || instance.deployed} onClick={() => setDeployInstanceDialog(true)}>
-														{activeDeploymentTaskStatus === undefined ? '触发部署' : '部署状态'}
-													</DropdownMenuItem>
-												</OptTooltip>
-												<OptTooltip show={!deployedInstanceRunning} content="无有效实例">
-													<DropdownMenuItem
-														disabled={!deployedInstanceRunning}
-														onClick={() => {
-															setBackupOrArchive('backup');
-															setBackupOrArchiveDialog(true);
-														}}
-													>
-														触发服务器备份
-													</DropdownMenuItem>
-												</OptTooltip>
-												<OptTooltip show={!deployedInstanceRunning} content="无有效实例">
-													<DropdownMenuItem
-														disabled={!deployedInstanceRunning}
-														onClick={() => {
-															setBackupOrArchive('archive');
-															setBackupOrArchiveDialog(true);
-														}}
-													>
-														触发服务器归档
-													</DropdownMenuItem>
-												</OptTooltip>
-												<DropdownMenuItem onClick={() => setDeleteInstanceDialog(true)} variant="destructive">
+												<OptDropdownMenuItem conditions={[condAdmin, condDeployedInstanceRunning]} onClick={() => setDeployInstanceDialog(true)}>
+													{activeDeploymentTaskStatus === undefined ? '触发部署' : '部署状态'}
+												</OptDropdownMenuItem>
+												<OptDropdownMenuItem
+													conditions={[condAdmin, condDeployedInstanceRunning]}
+													onClick={() => {
+														setBackupOrArchive('backup');
+														setBackupOrArchiveDialog(true);
+													}}
+												>
+													触发服务器备份
+												</OptDropdownMenuItem>
+												<OptDropdownMenuItem
+													conditions={[condAdmin, condDeployedInstanceRunning]}
+													onClick={() => {
+														setBackupOrArchive('archive');
+														setBackupOrArchiveDialog(true);
+													}}
+												>
+													触发服务器归档
+												</OptDropdownMenuItem>
+												<OptDropdownMenuItem conditions={[condAdmin]} onClick={() => setDeleteInstanceDialog(true)} variant="destructive">
 													删除实例
-												</DropdownMenuItem>
+												</OptDropdownMenuItem>
 											</DropdownMenuContent>
 										</DropdownMenu>
 									</div>
