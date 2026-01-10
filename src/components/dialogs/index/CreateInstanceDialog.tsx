@@ -32,7 +32,7 @@ export default function CreateInstanceDialog(props: DialogControl) {
 
 	const refreshBestInstanceType = useCallback(() => {
 		setBestInstanceTypeLoading(true);
-		req<PreferredInstanceCharge>('/preferred-instance-charge', 'GET')
+		req<PreferredInstanceCharge>('/instance/preferred-charge', 'GET')
 			.then(({ data, error }) => {
 				if (error !== null) {
 					setBestInstanceTypeError(error);
@@ -54,7 +54,7 @@ export default function CreateInstanceDialog(props: DialogControl) {
 					<Button
 						onClick={async () => {
 							setCreateInstanceLoading(true);
-							const { error } = await req('/create-preferred-instance?autoVSwitch=1', 'GET');
+							const { error } = await req('/instance/create-preferred?autoVSwitch=1', 'GET');
 							setCreateInstanceLoading(false);
 
 							if (error !== null) {

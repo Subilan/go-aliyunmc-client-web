@@ -1,7 +1,7 @@
 import { LS_KEY_USER_LOGIN_TOKEN } from '@/consts';
 
 export async function isAuthenticated() {
-	const { error } = await req('/authed-ping', 'GET');
+	const { error } = await req('/auth/ping', 'GET');
 
 	return error === null;
 }

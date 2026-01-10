@@ -59,13 +59,13 @@ async function fetchActiveDeploymentTaskStatus() {
 }
 
 async function fetchActiveOrLatestInstance() {
-	const { data, error } = await req<Instance>('/active-or-latest-instance', 'GET');
+	const { data, error } = await req<Instance>('/instance', 'GET');
 
 	return error === null ? data : undefined;
 }
 
 async function fetchActiveInstanceStatus() {
-	const { data, error } = await req<InstanceStatus>('/instance-status', 'get');
+	const { data, error } = await req<InstanceStatus>('/instance/status', 'get');
 
 	return error === null ? data : undefined;
 }

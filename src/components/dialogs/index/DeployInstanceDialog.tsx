@@ -23,7 +23,7 @@ export default function DeployInstanceDialog({ output = '', latestOutput = '', .
 					<Button
 						disabled={props.status === 'running' || props.status === 'success'}
 						onClick={async () => {
-							const { error } = await req('/instance-deploy', 'get');
+							const { error } = await req('/instance/deploy', 'get');
 
 							if (error !== null) {
 								toast.error('触发部署任务失败：' + error);
