@@ -59,6 +59,76 @@ async function fetchServerQueryServerSizes() {
 		: undefined;
 }
 
+export type PublicServerProperties = {
+	whiteList: boolean;
+	viewDistance: number;
+	simulationDistance: number;
+	pvp: boolean;
+	onlineMode: boolean;
+	difficulty: string;
+	maxPlayers: number;
+};
+
+function hyphenToCamel(str: string) {
+	return str.replace(/-([a-z])/g, (_, capture) => {
+		return capture.toUpperCase();
+	});
+}
+
+function parseServerProperties(raw: string): PublicServerProperties {
+	const lines = raw.trimEnd().split('\n');
+
+	return Object.fromEntries(
+		lines
+			.filter(x => !x.startsWith('#'))
+			.map(x => {
+				const entry = x.split('=').slice(0, 2) as [any, any];
+				entry[0] = hyphenToCamel(entry[0]);
+				if (entry[1].startsWith('"') && entry[1].endsWith('"')) {
+					entry[1] = entry[1].slice(1, -1);
+				} else if (/^\d+$/.test(entry[1])) {
+					entry[1] = Number(entry[1]);
+				} else if (entry[1] === 'true') {
+					entry[1] = true;
+				} else if (entry[1] === 'false') {
+					entry[1] = false;
+				}
+				return entry;
+			})
+	);
+}
+
+async function fetchServerProperties() {
+	const { data, error } = await req<string>('/server/query?queryType=get_server_properties', 'get');
+
+	return error === null ? parseServerProperties(data) : undefined;
+}
+
+type CachedPlayerItem = {
+	name: string;
+	uuid: string;
+	isOp: boolean;
+};
+
+type OpItem = {
+	uuid: string;
+	name: string;
+	level: number;
+	bypassesPlayerLimit: boolean;
+};
+
+async function fetchCachedPlayers() {
+	const { data, error } = await req<string>('/server/query?queryType=get_cached_players', 'get');
+
+	return error === null ? (JSON.parse(data) as CachedPlayerItem[]) : undefined;
+}
+
+async function fetchOps() {
+	const { data, error } = await req<string>('/server/query?queryType=get_ops', 'get');
+
+	return error === null ? (JSON.parse(data) as OpItem[]) : undefined;
+}
+
 export default function DetailDialog(props: DialogControl & { deployedInstanceRunning: boolean }) {
 	const [backupInfo, setBackupInfo] = useState<CommandExec[]>([]);
 	const [backupInfoLoading, setBackupInfoLoading] = useState(false);
@@ -66,17 +136,17 @@ export default function DetailDialog(props: DialogControl & { deployedInstanceRu
 	const [screenfetchLoading, setScreenfetchLoading] = useState(false);
 	const [sizes, setSizes] = useState<{ dir: string; size: string }[]>([]);
 	const [sizesLoading, setSizesLoading] = useState(false);
-	const [screenfetchAvail, setScreenfetchAvail] = useState(props.deployedInstanceRunning);
-	const [sizesAvail, setSizesAvail] = useState(props.deployedInstanceRunning);
 	const [refreshedAt, setRefreshedAt] = useState('');
+	const [serverProperties, setServerProperties] = useState<PublicServerProperties>();
+	const [serverPropertiesLoading, setServerPropertiesLoading] = useState(false);
+	const [cachedPlayers, setCachedPlayers] = useState<CachedPlayerItem[]>([]);
+	const [cachedPlayersLoading, setCachedPlayersLoading] = useState(false);
 
 	useEffect(() => {
-		setScreenfetchAvail(props.deployedInstanceRunning);
-		setSizesAvail(props.deployedInstanceRunning);
-
 		if (props.deployedInstanceRunning) {
 			setScreenfetchLoading(true);
 			setSizesLoading(true);
+			setServerPropertiesLoading(true);
 
 			Promise.all([
 				fetchServerQueryScreenfetch()
@@ -92,7 +162,30 @@ export default function DetailDialog(props: DialogControl & { deployedInstanceRu
 							setSizes(data);
 						}
 					})
-					.finally(() => setSizesLoading(false))
+					.finally(() => setSizesLoading(false)),
+				fetchServerProperties()
+					.then(data => {
+						if (data) {
+							setServerProperties(data);
+						}
+					})
+					.finally(() => setServerPropertiesLoading(false)),
+				fetchOps()
+					.then(data => {
+						if (data) {
+							const opNames = Object.fromEntries(data.map(x => [x.name, true])) as Record<string, true>;
+
+							fetchCachedPlayers().then(players => {
+								if (players) {
+									for (const p of players) {
+										p.isOp = opNames[p.name] || false;
+									}
+									setCachedPlayers(players);
+								}
+							});
+						}
+					})
+					.finally(() => setCachedPlayersLoading(false))
 			]).finally(() => setRefreshedAt(times.formatDatetime(new Date())));
 		}
 	}, [props.deployedInstanceRunning]);
@@ -111,27 +204,41 @@ export default function DetailDialog(props: DialogControl & { deployedInstanceRu
 	return (
 		<Wrapper open={props.open} setOpen={props.setOpen} title="周目信息" className="max-w-175!">
 			{refreshedAt.length > 0 && <p>数据更新于 {refreshedAt}</p>}
-			<Tabs defaultValue="configuration">
+			<Tabs defaultValue="properties">
 				<TabsList className="mb-2">
-					<TabsTrigger value="configuration">游戏配置</TabsTrigger>
+					<TabsTrigger value="properties">游戏配置</TabsTrigger>
 					<TabsTrigger value="backupInfo">备份情况</TabsTrigger>
-					<TabsTrigger value="players">周目玩家</TabsTrigger>
+					<TabsTrigger value="players">周目玩家{props.deployedInstanceRunning && cachedPlayers && ` (${cachedPlayers.length})`}</TabsTrigger>
 					<TabsTrigger value="screenfetch">Screenfetch</TabsTrigger>
 					<TabsTrigger value="sizes">存档大小</TabsTrigger>
 				</TabsList>
-				<TabsContent value="configuration">
-					<DataListKv
-						grid
-						border
-						data={{
-							'Java 版本': 'Zulu 21',
-							游戏版本: '1.21.1',
-							服务端: 'Paper',
-							难度: 'Hard',
-							白名单: true,
-							正版验证: true
-						}}
-					/>
+				<TabsContent value="properties">
+					{props.deployedInstanceRunning ? (
+						serverPropertiesLoading ? (
+							<Spinner />
+						) : (
+							serverProperties && (
+								<DataListKv
+									grid
+									border
+									data={{
+										'Java 版本': 'Zulu 21',
+										游戏版本: '1.21.1',
+										服务端: 'Paper',
+										难度: serverProperties.difficulty,
+										白名单: serverProperties.whiteList,
+										正版验证: serverProperties.onlineMode,
+										PVP: serverProperties.pvp,
+										最大玩家: serverProperties.maxPlayers,
+										模拟距离: serverProperties.simulationDistance,
+										视距: serverProperties.viewDistance
+									}}
+								/>
+							)
+						)
+					) : (
+						<DetailEmpty />
+					)}
 				</TabsContent>
 				<TabsContent value="backupInfo">
 					{backupInfoLoading ? (
@@ -150,23 +257,33 @@ export default function DetailDialog(props: DialogControl & { deployedInstanceRu
 					)}
 				</TabsContent>
 				<TabsContent value="players">
-					<p>此处列出了加入过此周目的所有玩家。</p>
-					<div className="flex flex-col gap-3 mt-3">
-						{['Constant137', 'Subilan'].map(player => (
-							<Item variant={'outline'} key={player}>
-								<ItemMedia>
-									<img draggable="false" src={mchead(player)} className="h-[40px] w-[40px]" />
-								</ItemMedia>
-								<ItemContent>
-									<ItemTitle>{player}</ItemTitle>
-									<ItemDescription>Op · 13h</ItemDescription>
-								</ItemContent>
-							</Item>
-						))}
+					<div className="flex flex-col gap-3">
+						{props.deployedInstanceRunning ? (
+							cachedPlayersLoading ? (
+								<Spinner />
+							) : (
+								<>
+									<p>此处列出了加入过此周目的所有玩家。</p>
+									{cachedPlayers.map(player => (
+										<Item variant={'outline'} key={player.uuid}>
+											<ItemMedia>
+												<img draggable="false" src={mchead(player.uuid)} className="h-[40px] w-[40px]" />
+											</ItemMedia>
+											<ItemContent>
+												<ItemTitle>{player.name}</ItemTitle>
+												<ItemDescription>{player.isOp ? 'Op' : '普通玩家'}</ItemDescription>
+											</ItemContent>
+										</Item>
+									))}
+								</>
+							)
+						) : (
+							<DetailEmpty />
+						)}
 					</div>
 				</TabsContent>
 				<TabsContent value="screenfetch">
-					{screenfetchAvail ? (
+					{props.deployedInstanceRunning ? (
 						screenfetchLoading ? (
 							<Spinner />
 						) : (
@@ -179,7 +296,7 @@ export default function DetailDialog(props: DialogControl & { deployedInstanceRu
 					)}
 				</TabsContent>
 				<TabsContent value="sizes">
-					{sizesAvail ? (
+					{props.deployedInstanceRunning ? (
 						sizesLoading ? (
 							<Spinner />
 						) : (
