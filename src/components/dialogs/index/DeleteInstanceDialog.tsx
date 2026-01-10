@@ -8,8 +8,8 @@ import Wrapper from '@/components/dialogs/Wrapper';
 import { FieldGroup, FieldSet, FieldContent, FieldTitle, FieldLabel, FieldDescription, Field } from '@/components/ui/field';
 import { RadioGroupItem, RadioGroup } from '@/components/ui/radio-group';
 
-export default function DeleteInstanceDialog(props: DialogControl) {
-	const [deleteMode, setDeleteMode] = useState<'safe' | 'force'>('safe');
+export default function DeleteInstanceDialog(props: DialogControl & { deployedInstanceRunning: boolean }) {
+	const [deleteMode, setDeleteMode] = useState<'safe' | 'force'>(props.deployedInstanceRunning ? 'safe' : 'force');
 	const [loading, setLoading] = useState(false);
 
 	return (
@@ -43,18 +43,21 @@ export default function DeleteInstanceDialog(props: DialogControl) {
 				}
 			>
 				<p>确认要删除实例吗？此操作不可撤销。请选择删除的方式。</p>
+				{!props.deployedInstanceRunning && <p className='text-red-600'>实例的当前状态不支持执行安全删除。</p>}
 				<FieldGroup>
 					<FieldSet>
 						<RadioGroup value={deleteMode} onValueChange={v => setDeleteMode(v as 'safe' | 'force')}>
-							<FieldLabel htmlFor="safeDelete">
-								<Field orientation="horizontal">
-									<FieldContent>
-										<FieldTitle>安全删除</FieldTitle>
-										<FieldDescription>关闭服务器并归档数据后，删除实例。</FieldDescription>
-									</FieldContent>
-									<RadioGroupItem value="safe" id="safeDelete" />
-								</Field>
-							</FieldLabel>
+							{props.deployedInstanceRunning && (
+								<FieldLabel htmlFor="safeDelete">
+									<Field orientation="horizontal">
+										<FieldContent>
+											<FieldTitle>安全删除</FieldTitle>
+											<FieldDescription>关闭服务器并归档数据后，删除实例。</FieldDescription>
+										</FieldContent>
+										<RadioGroupItem value="safe" id="safeDelete" />
+									</Field>
+								</FieldLabel>
+							)}
 							<FieldLabel htmlFor="forceDelete">
 								<Field orientation="horizontal">
 									<FieldContent>

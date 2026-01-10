@@ -240,7 +240,7 @@ export default function Index() {
 				{deployedInstanceRunning && <BackupOrArchiveDialog type={backupOrArchive} open={backupOrArchiveDialog} setOpen={setBackupOrArchiveDialog} />}
 				<DetailDialog deployedInstanceRunning={deployedInstanceRunning} open={serverDetailDialog} setOpen={setServerDetailDialog} />
 				<CreateInstanceDialog open={createInstanceDialog} setOpen={setCreateInstanceDialog} />
-				<DeleteInstanceDialog open={deleteInstanceDialog} setOpen={setDeleteInstanceDialog} />
+				<DeleteInstanceDialog deployedInstanceRunning={deployedInstanceRunning} open={deleteInstanceDialog} setOpen={setDeleteInstanceDialog} />
 				<DeployInstanceDialog latestOutput={deployInstanceLatestOutput} status={activeDeploymentTaskStatus} setStatus={setActiveDeploymentTaskStatus} output={deployInstanceOutput} open={deployInstanceDialog} setOpen={setDeployInstanceDialog} />
 				<div className="max-w-175 mx-auto my-16">
 					<div className="flex flex-col gap-5">
