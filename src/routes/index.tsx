@@ -227,8 +227,6 @@ export default function Index() {
 		};
 	}, []);
 
-	const [startServerLoading, setStartServerLoading] = useState(false);
-
 	const [startOrStopServerDialog, setStartOrStopServerDialog] = useState(false);
 	const [serverDetailDialog, setServerDetailDialog] = useState(false);
 	const [backupOrArchiveDialog, setBackupOrArchiveDialog] = useState(false);
@@ -350,7 +348,7 @@ export default function Index() {
 											data={{
 												'实例 ID': { content: instance.instanceId, copy: true },
 												实例型号: instance.instanceType,
-												'地域/可用区': instance.regionId,
+												'地域/可用区': instance.zoneId,
 												创建时间: { content: times.formatDateAgo(instance.createdAt), detail: instance.createdAt }
 											}}
 										/>
@@ -374,13 +372,12 @@ export default function Index() {
 										<div className="flex-1"></div>
 										{!isServerRunning && (
 											<Button
-												disabled={startServerLoading}
-												onClick={async () => {
+												onClick={() => {
 													setStartOrStop('start');
 													setStartOrStopServerDialog(true);
 												}}
 											>
-												开启服务器 {startServerLoading && <Spinner />}
+												开启服务器
 											</Button>
 										)}
 										{isServerRunning && (

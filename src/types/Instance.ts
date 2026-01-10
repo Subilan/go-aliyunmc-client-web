@@ -7,6 +7,7 @@ export type Instance = {
 	createdAt: string;
 	deployed: boolean;
 	ip: string | null;
+	vswitchId: string;
 };
 
 export type InstanceStatus = 'Pending' | 'Starting' | 'Running' | 'Stopping' | 'Stopped' | 'unable_to_get';

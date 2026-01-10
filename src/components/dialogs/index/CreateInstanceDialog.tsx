@@ -9,46 +9,40 @@ import { useCallback, useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import Wrapper from '@/components/dialogs/Wrapper';
 
-export type InstanceTypeAndTradePrice = {
-	instanceType: string;
-	cpuCoreCount: number;
-	memorySize: number;
-	tradePrice: number;
+export type PreferredInstanceCharge = {
+	zoneId: string;
+	typeAndTradePrice: {
+		instanceType: string;
+		cpuCoreCount: number;
+		memorySize: number;
+		tradePrice: number;
+	};
 };
 
 export default function CreateInstanceDialog(props: DialogControl) {
 	const [bestInstanceTypeLoading, setBestInstanceTypeLoading] = useState(false);
-	const [bestInstanceType, setBestInstanceType] = useState<InstanceTypeAndTradePrice>();
+	const [bestInstanceType, setBestInstanceType] = useState<PreferredInstanceCharge>();
 	const [bestInstanceTypeError, setBestInstanceTypeError] = useState<string | null>(null);
 
 	const [createInstanceLoading, setCreateInstanceLoading] = useState(false);
 
-	const refreshBestInstanceType = useCallback(async () => {
-		setBestInstanceTypeLoading(true);
-		req<{ zoneId: string; typesAndTradePrice: InstanceTypeAndTradePrice[] }[]>('/instance-types-and-charge?minimumMemorySize=8&maximumMemorySize=16&minimumCpuCoreCount=1&maximumCpuCoreCount=8&cpuArchitecture=X86&zoneId=cn-shenzhen-c&sortBy=tradePrice&sortOrder=asc', 'GET').then(({ data, error }) => {
-			setBestInstanceTypeLoading(false);
-
-			if (error !== null) {
-				setBestInstanceTypeError(error);
-				return;
-			}
-
-			const best = data[0].typesAndTradePrice.filter(x => x.memorySize > 8 && !/^ecs\.(e|s6|xn4|n4|mn4|e4|t|d).*$/.test(x.instanceType) && x.tradePrice < 0.6)[0];
-
-			if (best === undefined) {
-				setBestInstanceTypeError('没有符合要求的实例');
-				return;
-			}
-
-			setBestInstanceType(best);
-		});
+	useEffect(() => {
+		refreshBestInstanceType();
 	}, []);
 
-	useEffect(() => {
-		if (props.open && bestInstanceType === undefined) {
-			refreshBestInstanceType();
-		}
-	}, [props.open]);
+	const refreshBestInstanceType = useCallback(() => {
+		setBestInstanceTypeLoading(true);
+		req<PreferredInstanceCharge>('/preferred-instance-charge', 'GET')
+			.then(({ data, error }) => {
+				if (error !== null) {
+					setBestInstanceTypeError(error);
+					return;
+				}
+
+				setBestInstanceType(data);
+			})
+			.finally(() => setBestInstanceTypeLoading(false));
+	}, []);
 
 	return (
 		<Wrapper
@@ -60,11 +54,7 @@ export default function CreateInstanceDialog(props: DialogControl) {
 					<Button
 						onClick={async () => {
 							setCreateInstanceLoading(true);
-							const { error } = await req('/instance', 'POST', {
-								zoneId: 'cn-shenzhen-c',
-								instanceType: bestInstanceType?.instanceType,
-								vswitchId: 'vsw-wz995l4az1ab9awbe6wwz'
-							});
+							const { error } = await req('/create-preferred-instance?autoVSwitch=1', 'GET');
 							setCreateInstanceLoading(false);
 
 							if (error !== null) {
@@ -89,24 +79,24 @@ export default function CreateInstanceDialog(props: DialogControl) {
 					<>
 						<AlertTitle>无法找到实例</AlertTitle>
 						<AlertDescription>错误：{bestInstanceTypeError}</AlertDescription>
+						<AlertAction>
+							<Button variant={'outline'} size={'icon-xs'} onClick={refreshBestInstanceType}>
+								<RefreshCwIcon />
+							</Button>
+						</AlertAction>
 					</>
 				) : (
 					<>
-						<AlertTitle>{bestInstanceTypeLoading ? '寻找最优实例中...' : bestInstanceType?.instanceType}</AlertTitle>
+						<AlertTitle>{bestInstanceTypeLoading ? '寻找最优实例中...' : bestInstanceType?.typeAndTradePrice.instanceType}</AlertTitle>
 						<AlertDescription>
 							{bestInstanceTypeLoading ? (
 								'可能需要至多 1 分钟，请耐心等待'
 							) : (
 								<div className="flex items-center gap-2">
-									cn-shenzhen-c <Separator orientation="vertical" /> {bestInstanceType?.cpuCoreCount} vCPU <Separator orientation="vertical" /> {bestInstanceType?.memorySize} GiB <Separator orientation="vertical" /> ¥{bestInstanceType?.tradePrice.toFixed(2)}/h
+									{bestInstanceType?.zoneId} <Separator orientation="vertical" /> {bestInstanceType?.typeAndTradePrice.cpuCoreCount} vCPU <Separator orientation="vertical" /> {bestInstanceType?.typeAndTradePrice.memorySize} GiB <Separator orientation="vertical" /> ¥{bestInstanceType?.typeAndTradePrice.tradePrice.toFixed(2)}/h
 								</div>
 							)}
 						</AlertDescription>
-						<AlertAction>
-							<Button disabled={bestInstanceTypeLoading} onClick={refreshBestInstanceType} variant={'outline'} size={'icon-xs'}>
-								<RefreshCwIcon size={5} />
-							</Button>
-						</AlertAction>
 					</>
 				)}
 			</Alert>

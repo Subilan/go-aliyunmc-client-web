@@ -11,7 +11,6 @@ import times from '@/lib/times';
 import type { CommandExec } from '@/types/CommandExec';
 import { ServerOffIcon } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { toast } from 'sonner';
 
 const dirNameMappings: Record<string, string> = {
 	'/home/mc/server/archive': '总存档',
