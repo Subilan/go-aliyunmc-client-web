@@ -22,6 +22,7 @@ export type WrappedTableProps<T extends Record<string, any>> = {
 export default function WrappedTable<T extends Record<string, any>>({ data, keys, getKey, page, setPage, setPageSize, pageCount, header, render }: WrappedTableProps<T>) {
 	const [jumpto, setJumpto] = useState('1');
 	const jumptoNumber = useMemo(() => Number(jumpto), [jumpto]);
+	const [popover, setPopover] = useState(false);
 
 	return (
 		<>
@@ -39,7 +40,7 @@ export default function WrappedTable<T extends Record<string, any>>({ data, keys
 					{data.map(d => (
 						<TableRow key={getKey(d)}>
 							{keys.map(k => (
-								<TableCell>{render[k] ? render[k](d) : d[k]}</TableCell>
+								<TableCell key={getKey(d)+k.toString()}>{render[k] ? render[k](d) : d[k]}</TableCell>
 							))}
 						</TableRow>
 					))}
@@ -70,7 +71,7 @@ export default function WrappedTable<T extends Record<string, any>>({ data, keys
 						<ArrowRightIcon />
 					</Button>
 				</div>
-				<Popover>
+				<Popover open={popover} onOpenChange={setPopover}>
 					<PopoverTrigger asChild>
 						<Button variant={'outline'}>跳转到</Button>
 					</PopoverTrigger>
@@ -79,6 +80,7 @@ export default function WrappedTable<T extends Record<string, any>>({ data, keys
 							onSubmit={e => {
 								e.preventDefault();
 								setPage(jumptoNumber);
+								setPopover(false);
 							}}
 							className="flex items-center gap-2"
 						>
