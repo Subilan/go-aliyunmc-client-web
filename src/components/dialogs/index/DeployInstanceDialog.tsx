@@ -6,11 +6,12 @@ import { Spinner } from '@/components/ui/spinner';
 import { StreamManagerContext } from '@/contexts/StreamManagerContext';
 import { UserPayloadContext } from '@/contexts/UserPayloadContext';
 import { req } from '@/lib/req';
+import type { TaskStatus } from '@/types/Task';
 import { AlertCircleIcon, CheckIcon, XCircleIcon } from 'lucide-react';
 import { useContext, type SetStateAction } from 'react';
 import { toast } from 'sonner';
 
-export default function DeployInstanceDialog({ output = '', latestOutput = '', ...props }: DialogControl & { status?: string; setStatus: React.Dispatch<SetStateAction<string>>; output?: string; latestOutput?: string }) {
+export default function DeployInstanceDialog({ output = '', latestOutput = '', ...props }: DialogControl & { status?: string; setStatus: React.Dispatch<SetStateAction<TaskStatus | undefined>>; output?: string; latestOutput?: string }) {
 	const stream = useContext(StreamManagerContext);
 	const userPayload = useContext(UserPayloadContext);
 
