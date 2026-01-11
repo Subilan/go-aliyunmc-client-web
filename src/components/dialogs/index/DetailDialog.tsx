@@ -121,13 +121,13 @@ type OpItem = {
 async function fetchCachedPlayers() {
 	const { data, error } = await req<string>('/server/query?queryType=get_cached_players', 'get');
 
-	return error === null ? (JSON.parse(data) as CachedPlayerItem[]) : undefined;
+	return error === null ? (data === '' ? [] : (JSON.parse(data) as CachedPlayerItem[])) : undefined;
 }
 
 async function fetchOps() {
 	const { data, error } = await req<string>('/server/query?queryType=get_ops', 'get');
 
-	return error === null ? (JSON.parse(data) as OpItem[]) : undefined;
+	return error === null ? (data === '' ? [] : (JSON.parse(data) as OpItem[])) : undefined;
 }
 
 export default function DetailDialog(props: DialogControl & { deployedInstanceRunning: boolean }) {

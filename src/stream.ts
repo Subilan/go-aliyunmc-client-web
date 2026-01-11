@@ -4,7 +4,7 @@ import { toast } from 'sonner';
 import z from 'zod';
 
 const ReceivedEventRaw = z.object({
-	type: z.literal([0, 1, 2]),
+	type: z.literal([0, 1, 2, 3, 4]),
 	is_error: z.boolean(),
 	content: z.string()
 });
@@ -19,12 +19,22 @@ const ServerEvent = z.object({
 	data: z.any()
 });
 
+const ErrorEvent = z.object({
+	details: z.string()
+});
+
+const SyncEvent = z.object({
+	syncType: z.literal(['clear_last_event_id'])
+});
+
 export type ReceivedEventRawT = z.infer<typeof ReceivedEventRaw>;
 export type InstanceEventT = z.infer<typeof InstanceEvent>;
 export type ServerEventT = z.infer<typeof ServerEvent>;
 export const EventTypeDeployment = 0;
 export const EventTypeServer = 1;
 export const EventTypeInstance = 2;
+export const EventTypeError = 3;
+export const EventTypeSync = 4;
 
 export type StreamHookDictionary = {
 	onInstance?: (event: InstanceEventT) => void;
@@ -99,7 +109,7 @@ export class StreamManager {
 
 				const { success, data } = ReceivedEventRaw.safeParse(JSON.parse(ev.data));
 
-				console.log(data);
+				console.log('received raw', data);
 
 				if (!success) {
 					console.warn('cannot parse incoming stream data', ev.data);
@@ -133,6 +143,33 @@ export class StreamManager {
 						}
 
 						hooks.onInstance?.(result.data);
+						break;
+					}
+					case EventTypeError: {
+						const result = ErrorEvent.safeParse(JSON.parse(data.content));
+
+						if (!result.success) {
+							console.warn('cannot parse error event', data.content);
+							return;
+						}
+
+						toast.error(result.data.details);
+						break;
+					}
+					case EventTypeSync: {
+						const result = SyncEvent.safeParse(JSON.parse(data.content));
+
+						if (!result.success) {
+							console.warn('cannot parse sync event', data.content);
+							return;
+						}
+
+						switch (result.data.syncType) {
+							case 'clear_last_event_id': {
+								setLastEventId('');
+								break;
+							}
+						}
 						break;
 					}
 				}
