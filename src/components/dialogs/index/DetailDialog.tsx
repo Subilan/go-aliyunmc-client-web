@@ -80,6 +80,7 @@ function parseServerProperties(raw: string): PublicServerProperties {
 
 	return Object.fromEntries(
 		lines
+			.filter(x => x)
 			.filter(x => !x.startsWith('#'))
 			.map(x => {
 				const entry = x.split('=').slice(0, 2) as [any, any];

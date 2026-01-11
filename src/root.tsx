@@ -11,6 +11,7 @@ import ErrorPage from '@/error';
 import { ErrorBoundary } from 'react-error-boundary';
 import { StreamManagerContext } from '@/contexts/StreamManagerContext';
 import { Toaster } from '@/components/ui/sonner';
+import type { User } from '@/types/User';
 
 export const RootRoute = createRootRoute({
 	errorComponent: ErrorPage
@@ -55,7 +56,15 @@ async function checkAndFetchUserPayload() {
 		return EmptyLoadedUserPayload;
 	}
 
-	return { ...payload, valid: true, loaded: true };
+	const { data: user, error: userError } = await req<User>('/user', 'get');
+
+	if (userError !== null) {
+		console.warn('获取用户动态信息失败');
+		console.warn(userError);
+		return EmptyLoadedUserPayload;
+	}
+
+	return { ...payload, role: user.role, valid: true, loaded: true };
 }
 
 export function Root() {

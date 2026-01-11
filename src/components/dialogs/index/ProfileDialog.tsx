@@ -53,7 +53,7 @@ export default function ProfileDialog(props: DialogControl) {
 						<div className="flex flex-col gap-2">
 							<div className="font-bold">权限组</div>
 							<p>
-								{userPayload.role === 'user' && '普通用户'} {userPayload.role === 'admin' && '超级用户'}
+								{user.role === 'user' && '普通用户'} {user.role === 'admin' && '超级用户'}
 							</p>
 						</div>
 						<div className="flex flex-col gap-2">

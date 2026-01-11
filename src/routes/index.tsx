@@ -6,7 +6,7 @@ import { createRoute, redirect } from '@tanstack/react-router';
 import { useContext, useEffect, useMemo, useState } from 'react';
 import times from '@/lib/times';
 import DataListKv from '@/components/data-list-kv';
-import { CopyIcon, InfoIcon, MoreHorizontalIcon, RouteOffIcon, UserIcon } from 'lucide-react';
+import { CopyIcon, InfoIcon, MoreHorizontalIcon, RouteOffIcon, ServerOffIcon } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { isAuthenticated, req } from '@/lib/req';
 import { cn } from '@/lib/utils';
@@ -16,9 +16,9 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import CreateInstanceDialog from '@/components/dialogs/index/CreateInstanceDialog';
 import DeleteInstanceDialog from '@/components/dialogs/index/DeleteInstanceDialog';
 import DeployInstanceDialog from '@/components/dialogs/index/DeployInstanceDialog';
-import OptTooltip from '@/components/optional-tooltip';
+import CreateAndDeployDialog from '@/components/dialogs/index/CreateAndDeployDialog';
 import { Spinner } from '@/components/ui/spinner';
-import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty';
+import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import StartOrStopServerDialog from '@/components/dialogs/index/StartOrStopServerDialog';
 import BackupOrArchiveDialog from '@/components/dialogs/index/BackupOrArchiveDialog';
@@ -28,6 +28,8 @@ import type { ServerInfo } from '@/types/ServerInfo';
 import type { Instance, InstanceStatus } from '@/types/Instance';
 import ProfileDialog from '@/components/dialogs/index/ProfileDialog';
 import OptDropdownMenuItem from '@/components/optional-dropdown-menu-item';
+import { toast } from 'sonner';
+import OptTooltip from '@/components/optional-tooltip';
 
 export const IndexRoute = createRoute({
 	path: '/',
@@ -78,7 +80,7 @@ const instanceStatusColor: Record<InstanceStatus, string> = {
 	Running: 'before:bg-green-500',
 	Stopping: 'before:bg-amber-500',
 	Stopped: 'before:bg-red-500',
-	unable_to_get: 'before:bg-red-500'
+	UnableToGet: 'before:bg-red-500'
 };
 
 const instanceStatusText: Record<InstanceStatus, string> = {
@@ -87,7 +89,7 @@ const instanceStatusText: Record<InstanceStatus, string> = {
 	Running: '运行中',
 	Stopping: '关闭中',
 	Stopped: '已关闭',
-	unable_to_get: '同步失败'
+	UnableToGet: '同步失败'
 };
 
 export default function Index() {
@@ -122,6 +124,7 @@ export default function Index() {
 	const [createInstanceDialog, setCreateInstanceDialog] = useState(false);
 	const [deleteInstanceDialog, setDeleteInstanceDialog] = useState(false);
 	const [deployInstanceDialog, setDeployInstanceDialog] = useState(false);
+	const [createAndDeployDialog, setCreateAndDeployDialog] = useState(false);
 	const [deployInstanceOutput, setDeployInstanceOutput] = useState('');
 	const [deployInstanceLatestOutput, setDeployInstanceLatestOutput] = useState('');
 
@@ -151,6 +154,7 @@ export default function Index() {
 						streamManager.clearLastEventId();
 					}
 					if (event.data === 'success') {
+						toast.success('实例部署成功');
 						setInstance(inst => {
 							if (!inst) return inst;
 							return {
@@ -176,6 +180,17 @@ export default function Index() {
 							break;
 						}
 					}
+					break;
+				}
+
+				case 'create_and_deploy_failed': {
+					toast.error('一键创建失败：' + event.data);
+					break;
+				}
+
+				case 'create_and_deploy_step': {
+					toast.info('状态更新：' + event.data);
+					break;
 				}
 			}
 		});
@@ -190,12 +205,14 @@ export default function Index() {
 			switch (event.type) {
 				case 'notify': {
 					if (event.data === 'running') {
+						toast.success('服务器已开启');
 						// @ts-ignore
 						setServerInfo(info => ({ ...info, running: true }));
 						fetchServerInfo().then(info => setServerInfo(info));
 					}
 
 					if (event.data === 'closed') {
+						toast.info('服务器已关闭');
 						setServerInfo(info => ({ ...info, running: false }));
 						setServerOnlineCount(0);
 						setServerOnlinePlayers([]);
@@ -237,6 +254,7 @@ export default function Index() {
 	const [startOrStop, setStartOrStop] = useState<'start' | 'stop'>('start');
 
 	const condDeployedInstanceRunning = useMemo(() => ({ cond: !deployedInstanceRunning, message: '无有效实例' }), [deployedInstanceRunning]);
+	const condNotDeployedInstanceRunning = useMemo(() => ({ cond: deployedInstanceRunning, message: '无有效实例' }), [deployedInstanceRunning]);
 	const condAdmin = useMemo(() => ({ cond: userPayload.role !== 'admin', message: '权限不足' }), [userPayload]);
 
 	return (
@@ -248,6 +266,7 @@ export default function Index() {
 				<CreateInstanceDialog open={createInstanceDialog} setOpen={setCreateInstanceDialog} />
 				<DeleteInstanceDialog deployedInstanceRunning={deployedInstanceRunning} open={deleteInstanceDialog} setOpen={setDeleteInstanceDialog} />
 				<DeployInstanceDialog latestOutput={deployInstanceLatestOutput} status={activeDeploymentTaskStatus} setStatus={setActiveDeploymentTaskStatus} output={deployInstanceOutput} open={deployInstanceDialog} setOpen={setDeployInstanceDialog} />
+				<CreateAndDeployDialog open={createAndDeployDialog} setOpen={setCreateAndDeployDialog} />
 				<ProfileDialog open={profileDialog} setOpen={setProfileDialog} />
 				<div className="max-w-175 mx-auto my-16">
 					<div className="flex flex-col gap-5">
@@ -280,12 +299,31 @@ export default function Index() {
 								</ItemMedia>
 								<ItemContent>
 									<ItemTitle>无实例</ItemTitle>
-									<ItemDescription>当前没有正在运行的实例。要快速开始游戏，请单击「创建实例」。</ItemDescription>
+									<ItemDescription>当前没有正在运行的实例。要快速开始游戏，请单击「一键创建」。</ItemDescription>
 								</ItemContent>
 								<ItemActions>
-									<Button onClick={() => setCreateInstanceDialog(true)}>创建实例</Button>
+									<Button variant={'outline'} onClick={() => setCreateAndDeployDialog(true)}>
+										一键创建
+									</Button>
 								</ItemActions>
 							</Item>
+						)}
+						{(instance === undefined || instance.deletedAt !== null) && (
+							<Empty className="border">
+								<EmptyMedia>
+									<ServerOffIcon />
+								</EmptyMedia>
+								<EmptyHeader>
+									<EmptyTitle>暂无实例</EmptyTitle>
+								</EmptyHeader>
+								<EmptyContent>
+									<OptTooltip show={userPayload.role !== 'admin'} content="权限不足">
+										<Button disabled={userPayload.role !== 'admin'} onClick={() => setCreateInstanceDialog(true)}>
+											创建实例
+										</Button>
+									</OptTooltip>
+								</EmptyContent>
+							</Empty>
 						)}
 						{instance?.deletedAt === null && (
 							<section>
@@ -298,9 +336,18 @@ export default function Index() {
 												</Button>
 											</DropdownMenuTrigger>
 											<DropdownMenuContent>
-												<OptDropdownMenuItem conditions={[condAdmin, condDeployedInstanceRunning]} onClick={() => setDeployInstanceDialog(true)}>
-													{activeDeploymentTaskStatus === undefined ? '触发部署' : '部署状态'}
-												</OptDropdownMenuItem>
+												<OptTooltip
+													show={(activeDeploymentTaskStatus === undefined && userPayload.role !== 'admin') || deployedInstanceRunning}
+													content={(() => {
+														if (activeDeploymentTaskStatus === undefined && userPayload.role !== 'admin') return '权限不足';
+														if (deployedInstanceRunning) return '无有效实例';
+														return '';
+													})()}
+												>
+													<DropdownMenuItem disabled={(activeDeploymentTaskStatus === undefined && userPayload.role !== 'admin') || deployedInstanceRunning} onClick={() => setDeployInstanceDialog(true)}>
+														{activeDeploymentTaskStatus === undefined ? '触发部署' : '部署状态'}
+													</DropdownMenuItem>
+												</OptTooltip>
 												<OptDropdownMenuItem
 													conditions={[condAdmin, condDeployedInstanceRunning]}
 													onClick={() => {
@@ -381,15 +428,18 @@ export default function Index() {
 										)}
 										{isServerRunning && (
 											<>
-												<Button
-													onClick={() => {
-														setStartOrStop('stop');
-														setStartOrStopServerDialog(true);
-													}}
-													variant={'destructive'}
-												>
-													关闭服务器
-												</Button>
+												<OptTooltip show={userPayload.role !== 'admin'} content="权限不足">
+													<Button
+														onClick={() => {
+															setStartOrStop('stop');
+															setStartOrStopServerDialog(true);
+														}}
+														variant={'destructive'}
+														disabled={userPayload.role !== 'admin'}
+													>
+														关闭服务器
+													</Button>
+												</OptTooltip>
 											</>
 										)}
 									</CardHeader>

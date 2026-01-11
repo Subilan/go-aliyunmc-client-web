@@ -80,7 +80,7 @@ export default function CreateInstanceDialog(props: DialogControl) {
 						<AlertTitle>无法找到实例</AlertTitle>
 						<AlertDescription>错误：{bestInstanceTypeError}</AlertDescription>
 						<AlertAction>
-							<Button variant={'outline'} size={'icon-xs'} onClick={refreshBestInstanceType}>
+							<Button variant={'outline'} size={'icon-xs'} onClick={() => refreshBestInstanceType()}>
 								<RefreshCwIcon />
 							</Button>
 						</AlertAction>

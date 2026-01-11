@@ -10,4 +10,4 @@ export type Instance = {
 	vswitchId: string;
 };
 
-export type InstanceStatus = 'Pending' | 'Starting' | 'Running' | 'Stopping' | 'Stopped' | 'unable_to_get';
+export type InstanceStatus = 'Pending' | 'Starting' | 'Running' | 'Stopping' | 'Stopped' | 'UnableToGet';

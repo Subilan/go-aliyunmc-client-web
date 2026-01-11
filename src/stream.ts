@@ -10,7 +10,7 @@ const ReceivedEventRaw = z.object({
 });
 
 const InstanceEvent = z.object({
-	type: z.literal(['notify', 'active_status_update', 'active_ip_update', 'created', 'deployment_task_status_update']),
+	type: z.literal(['notify', 'active_status_update', 'active_ip_update', 'created', 'deployment_task_status_update', 'create_and_deploy_failed', 'create_and_deploy_step']),
 	data: z.any()
 });
 
