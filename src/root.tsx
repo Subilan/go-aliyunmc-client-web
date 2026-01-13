@@ -5,13 +5,13 @@ import { isAuthenticated, req } from '@/lib/req';
 import { IndexRoute } from '@/routes';
 import { LoginRoute } from '@/routes/lor';
 import { createRootRoute, createRouter, RouterProvider } from '@tanstack/react-router';
-import { useContext, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { PreviewRoute } from '@/routes/preview';
 import ErrorPage from '@/error';
 import { ErrorBoundary } from 'react-error-boundary';
-import { StreamManagerContext } from '@/contexts/StreamManagerContext';
 import { Toaster } from '@/components/ui/sonner';
 import type { User } from '@/types/User';
+import { StatusRoute } from '@/routes/status';
 
 export const RootRoute = createRootRoute({
 	errorComponent: ErrorPage
@@ -23,7 +23,7 @@ declare module '@tanstack/react-router' {
 	}
 }
 
-const routeTree = RootRoute.addChildren([IndexRoute, LoginRoute, PreviewRoute]);
+const routeTree = RootRoute.addChildren([IndexRoute, LoginRoute, PreviewRoute, StatusRoute]);
 
 export const router = createRouter({ routeTree });
 
@@ -78,13 +78,6 @@ export function Root() {
 	useEffect(() => {
 		console.log('user payload updated: ', userPayload);
 	}, [userPayload]);
-
-	const streamManager = useContext(StreamManagerContext);
-
-	useEffect(() => {
-		streamManager.listen(userLoginToken);
-		return () => streamManager.abort();
-	}, [userLoginToken]);
 
 	return (
 		<ErrorBoundary FallbackComponent={ErrorPage}>

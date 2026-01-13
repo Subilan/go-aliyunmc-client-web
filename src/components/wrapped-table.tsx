@@ -19,6 +19,12 @@ export type WrappedTableProps<T extends Record<string, any>> = {
 	pageCount: number;
 };
 
+export function useTableNavigation() {
+	const [page, setPage] = useState(1);
+	const [pageSize, setPageSize] = useState(10);
+	return { page, setPage, pageSize, setPageSize };
+}
+
 export default function WrappedTable<T extends Record<string, any>>({ data, keys, getKey, page, setPage, setPageSize, pageCount, header, render }: WrappedTableProps<T>) {
 	const [jumpto, setJumpto] = useState('1');
 	const jumptoNumber = useMemo(() => Number(jumpto), [jumpto]);

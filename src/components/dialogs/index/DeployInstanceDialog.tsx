@@ -3,16 +3,15 @@ import Wrapper from '@/components/dialogs/Wrapper';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
-import { StreamManagerContext } from '@/contexts/StreamManagerContext';
 import { UserPayloadContext } from '@/contexts/UserPayloadContext';
 import { req } from '@/lib/req';
+import type { StreamManager } from '@/stream';
 import type { TaskStatus } from '@/types/Task';
 import { AlertCircleIcon, CheckIcon, XCircleIcon } from 'lucide-react';
 import { useContext, type SetStateAction } from 'react';
 import { toast } from 'sonner';
 
-export default function DeployInstanceDialog({ output = '', latestOutput = '', ...props }: DialogControl & { status?: string; setStatus: React.Dispatch<SetStateAction<TaskStatus | undefined>>; output?: string; latestOutput?: string }) {
-	const stream = useContext(StreamManagerContext);
+export default function DeployInstanceDialog({ output = '', latestOutput = '', ...props }: DialogControl & { status?: string; setStatus: React.Dispatch<SetStateAction<TaskStatus | undefined>>; output?: string; latestOutput?: string; streamManager: StreamManager }) {
 	const userPayload = useContext(UserPayloadContext);
 
 	return (
@@ -34,7 +33,7 @@ export default function DeployInstanceDialog({ output = '', latestOutput = '', .
 							}
 
 							toast.success('已触发部署任务');
-							stream.clearDeploymentBuffer();
+							props.streamManager.clearDeploymentBuffer();
 						}}
 					>
 						{props.status === undefined ? '开始部署' : props.status === 'running' ? '请稍等' : props.status === 'success' ? '已部署完毕' : '重新部署'}

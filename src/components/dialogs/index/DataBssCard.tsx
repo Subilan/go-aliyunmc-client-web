@@ -8,7 +8,7 @@ import WrappedTable from '@/components/wrapped-table';
 import { fetchBssOverview } from '@/lib/requests/fetchBssOverview';
 import { fetchTransactions } from '@/lib/requests/fetchTransactions';
 import times from '@/lib/times';
-import { useTableNavigation } from '@/routes/index-sections/data';
+import { useTableNavigation } from '@/components/wrapped-table';
 import type { BssOverview } from '@/types/BssOverview';
 import { type Transaction, ProductTypeColor, ProductTypeWord } from '@/types/Transaction';
 import { InfoIcon } from 'lucide-react';

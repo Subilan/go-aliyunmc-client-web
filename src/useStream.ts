@@ -1,14 +1,16 @@
-import { StreamManagerContext } from "@/contexts/StreamManagerContext";
-import { IndexRoute } from "@/routes";
+import { IndexRoute } from '@/routes';
 import { fetchActiveOrLatestInstance } from './lib/requests/fetchActiveOrLatestInstance';
 import { fetchServerInfo } from './lib/requests/fetchServerInfo';
-import type { Instance, InstanceStatus } from "@/types/Instance";
-import type { ServerInfo } from "@/types/ServerInfo";
-import type { TaskStatus } from "@/types/Task";
-import { useContext, useEffect, useMemo, useState } from "react";
-import { toast } from "sonner";
+import type { Instance, InstanceStatus } from '@/types/Instance';
+import type { ServerInfo } from '@/types/ServerInfo';
+import type { TaskStatus } from '@/types/Task';
+import { useEffect, useMemo, useState } from 'react';
+import { toast } from 'sonner';
+import { StreamManager } from '@/stream';
+import { useLocalStorage } from '@uidotdev/usehooks';
+import { LS_KEY_USER_LOGIN_TOKEN } from '@/consts';
 
-export type UseStreamStatusesReturn = ReturnType<typeof useStream>;
+export type UseStreamReturn = ReturnType<typeof useStream>;
 
 export function useStream() {
 	const loaded = IndexRoute.useLoaderData();
@@ -22,12 +24,14 @@ export function useStream() {
 	const deployedInstanceRunning = useMemo(() => instanceStatus === 'Running' && instance?.deletedAt === null && instance.deployed, [instance, instanceStatus]);
 	const [deployInstanceOutput, setDeployInstanceOutput] = useState('');
 	const [deployInstanceLatestOutput, setDeployInstanceLatestOutput] = useState('');
-
-	const streamManager = useContext(StreamManagerContext);
+	const [userLoginToken] = useLocalStorage<string>(LS_KEY_USER_LOGIN_TOKEN, '');
+	const [streamManager] = useState(new StreamManager());
 
 	useEffect(() => {
+		console.log('initializing stream')
+		streamManager.listen(userLoginToken);
 		streamManager.setHook('onInstance', async event => {
-			console.log('onInstance', event);
+			// console.log('onInstance', event);
 			switch (event.type) {
 				case 'active_status_update': {
 					setInstanceStatus(event.data);
@@ -72,7 +76,7 @@ export function useStream() {
 					switch (event.data) {
 						case 'instance_deleted': {
 							const fetched = await fetchActiveOrLatestInstance();
-							setInstance(fetched!);
+							setInstance(fetched);
 							streamManager.clearLastEventId();
 							break;
 						}
@@ -103,14 +107,13 @@ export function useStream() {
 				case 'notify': {
 					if (event.data === 'running') {
 						toast.success('服务器已开启');
-						// @ts-ignore
-						setServerInfo(info => ({ ...info, running: true }));
+						setServerInfo(info => ({ ...info!, running: true }));
 						fetchServerInfo().then(info => setServerInfo(info));
 					}
 
 					if (event.data === 'closed') {
 						toast.info('服务器已关闭');
-						setServerInfo(info => ({ ...info, running: false }));
+						setServerInfo(info => ({ ...info!, running: false }));
 						setServerOnlineCount(0);
 						setServerOnlinePlayers([]);
 					}
@@ -138,13 +141,13 @@ export function useStream() {
 		});
 
 		return () => {
-			streamManager.rmHook('onDeployment');
-			streamManager.rmHook('onInstance');
-			streamManager.rmHook('onServer');
+			console.log('aborting stream');
+			streamManager.abort();
 		};
 	}, []);
 
 	return {
+		streamManager,
 		instance,
 		instanceStatus,
 		activeDeploymentTaskStatus,

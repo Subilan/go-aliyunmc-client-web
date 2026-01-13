@@ -6,7 +6,7 @@ import WrappedTable from '@/components/wrapped-table';
 import { fetchTaskOverview } from '@/lib/requests/fetchTaskOverview';
 import { fetchTasks } from '@/lib/requests/fetchTasks';
 import times from '@/lib/times';
-import { useTableNavigation } from '@/routes/index-sections/data';
+import { useTableNavigation } from '@/components/wrapped-table';
 import type { JoinedTask, TaskOverview } from '@/types/Task';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 

@@ -86,6 +86,8 @@ export class StreamManager {
 			return;
 		}
 
+		this.abortController = new AbortController();
+
 		const hooks = this.hooks;
 		const setLastEventId = (id: string) => {
 			this.lastEventId = id;
@@ -179,6 +181,72 @@ export class StreamManager {
 			},
 			onclose() {
 				console.log('stream closed');
+			}
+		});
+	}
+}
+
+export class SimpleStreamManager {
+	private abortController: AbortController;
+
+	constructor() {
+		this.abortController = new AbortController();
+	}
+
+	abort() {
+		this.abortController.abort()
+	}
+
+	listen(onServer: StreamHookDictionary['onServer'], onInstance: StreamHookDictionary['onInstance']) {
+		this.abortController = new AbortController();
+
+		fetchEventSource('http://127.0.0.1:33791/stream/simple-public', {
+			signal: this.abortController.signal,
+			async onopen() {
+				console.log('simple stream opened');
+			},
+			onmessage(ev) {
+				if (ev.data.trim().length === 0) return;
+
+				const { success, data } = ReceivedEventRaw.safeParse(JSON.parse(ev.data));
+
+				console.log('simple, received raw', data);
+
+				if (!success) {
+					console.warn('simple, cannot parse incoming stream data', ev.data);
+					return;
+				}
+
+				switch (data.type) {
+					case EventTypeServer: {
+						const result = ServerEvent.safeParse(JSON.parse(data.content));
+
+						if (!result.success) {
+							console.warn('cannot parse instance event', data.content);
+							return;
+						}
+
+						onServer?.(result.data);
+						break;
+					}
+					case EventTypeInstance: {
+						const result = InstanceEvent.safeParse(JSON.parse(data.content));
+
+						if (!result.success) {
+							console.warn('cannot parse instance event', data.content);
+							return;
+						}
+
+						onInstance?.(result.data);
+						break;
+					}
+				}
+			},
+			onerror(err) {
+				toast.error(err);
+			},
+			onclose() {
+				console.log('simple, stream closed');
 			}
 		});
 	}

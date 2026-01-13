@@ -7,7 +7,7 @@ import WrappedTable from "@/components/wrapped-table";
 import { fetchCommandExecOverview } from "@/lib/requests/fetchCommandExecOverview";
 import { fetchCommandExecs } from "@/lib/requests/fetchCommandExecs";
 import times from "@/lib/times";
-import { useTableNavigation } from "@/routes/index-sections/data";
+import { useTableNavigation } from '@/components/wrapped-table';
 import { CommandExecStatusColor, CommandExecStatusWord, CommandExecTypeWord, type CommandExecOverview, type JoinedCommandExec } from "@/types/CommandExec";
 import { InfoIcon } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";

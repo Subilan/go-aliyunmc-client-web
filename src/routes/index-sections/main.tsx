@@ -22,7 +22,7 @@ import mchead from '@/lib/mchead';
 import OptDropdownMenuItem from '@/components/optional-dropdown-menu-item';
 import OptTooltip from '@/components/optional-tooltip';
 import DetailDialog from '@/components/dialogs/index/DetailDialog';
-import type { UseStreamStatusesReturn } from '@/useStream';
+import type { UseStreamReturn } from '@/useStream';
 import { InstanceStatusColor, InstanceStatusWord } from '@/types/Instance';
 
 export default function IndexMainSection({
@@ -37,11 +37,12 @@ export default function IndexMainSection({
 	serverOnlinePlayers,
 	deployInstanceOutput,
 	deployInstanceLatestOutput,
-	deployedInstanceRunning
+	deployedInstanceRunning,
+	streamManager
 }: {
 	serverDetailDialog: boolean;
 	setServerDetailDialog: React.Dispatch<SetStateAction<boolean>>;
-} & UseStreamStatusesReturn) {
+} & UseStreamReturn) {
 	const userPayload = useContext(UserPayloadContext);
 
 	const [createInstanceDialog, setCreateInstanceDialog] = useState(false);
@@ -67,7 +68,7 @@ export default function IndexMainSection({
 				{deployedInstanceRunning && <BackupOrArchiveDialog type={backupOrArchive} open={backupOrArchiveDialog} setOpen={setBackupOrArchiveDialog} />}
 				<CreateInstanceDialog open={createInstanceDialog} setOpen={setCreateInstanceDialog} />
 				<DeleteInstanceDialog deployedInstanceRunning={deployedInstanceRunning} open={deleteInstanceDialog} setOpen={setDeleteInstanceDialog} />
-				<DeployInstanceDialog latestOutput={deployInstanceLatestOutput} status={activeDeploymentTaskStatus} setStatus={setActiveDeploymentTaskStatus} output={deployInstanceOutput} open={deployInstanceDialog} setOpen={setDeployInstanceDialog} />
+				<DeployInstanceDialog streamManager={streamManager} latestOutput={deployInstanceLatestOutput} status={activeDeploymentTaskStatus} setStatus={setActiveDeploymentTaskStatus} output={deployInstanceOutput} open={deployInstanceDialog} setOpen={setDeployInstanceDialog} />
 				<CreateAndDeployDialog open={createAndDeployDialog} setOpen={setCreateAndDeployDialog} />
 				<div className="flex flex-col gap-5">
 					{activeDeploymentTaskStatus === 'running' && (
