@@ -1,14 +1,13 @@
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { UserPayloadContext } from '@/contexts/UserPayloadContext';
-import { useContext, useEffect, useMemo, useState, type SetStateAction } from 'react';
+import { useContext, useMemo, useState, type SetStateAction } from 'react';
 import times from '@/lib/times';
 import DataListKv from '@/components/data-list-kv';
 import { CopyIcon, InfoIcon, MoreHorizontalIcon, RouteOffIcon, ServerOffIcon } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
 import { Item, ItemContent, ItemMedia, ItemTitle, ItemDescription, ItemActions } from '@/components/ui/item';
-import { StreamManagerContext } from '@/contexts/StreamManagerContext';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import CreateInstanceDialog from '@/components/dialogs/index/CreateInstanceDialog';
 import DeleteInstanceDialog from '@/components/dialogs/index/DeleteInstanceDialog';
@@ -20,183 +19,43 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import StartOrStopServerDialog from '@/components/dialogs/index/StartOrStopServerDialog';
 import BackupOrArchiveDialog from '@/components/dialogs/index/BackupOrArchiveDialog';
 import mchead from '@/lib/mchead';
-import type { ServerInfo } from '@/types/ServerInfo';
-import type { Instance, InstanceStatus } from '@/types/Instance';
 import OptDropdownMenuItem from '@/components/optional-dropdown-menu-item';
-import { toast } from 'sonner';
 import OptTooltip from '@/components/optional-tooltip';
-import type { TaskStatus } from '@/types/Task';
-import { fetchActiveOrLatestInstance, fetchServerInfo, IndexRoute } from '@/routes';
 import DetailDialog from '@/components/dialogs/index/DetailDialog';
+import type { UseStreamStatusesReturn } from '@/useStream';
+import { InstanceStatusColor, InstanceStatusWord } from '@/types/Instance';
 
-const instanceStatusColor: Record<InstanceStatus, string> = {
-	Pending: 'before:bg-amber-500',
-	Starting: 'before:bg-amber-500',
-	Running: 'before:bg-green-500',
-	Stopping: 'before:bg-amber-500',
-	Stopped: 'before:bg-red-500',
-	UnableToGet: 'before:bg-red-500'
-};
-
-const instanceStatusText: Record<InstanceStatus, string> = {
-	Pending: '准备中',
-	Starting: '启动中',
-	Running: '运行中',
-	Stopping: '关闭中',
-	Stopped: '已关闭',
-	UnableToGet: '同步失败'
-};
-
-export default function IndexMainSection({ serverDetailDialog, setServerDetailDialog }: { serverDetailDialog: boolean; setServerDetailDialog: React.Dispatch<SetStateAction<boolean>> }) {
+export default function IndexMainSection({
+	serverDetailDialog,
+	setServerDetailDialog,
+	instance,
+	instanceStatus,
+	activeDeploymentTaskStatus,
+	setActiveDeploymentTaskStatus,
+	isServerRunning,
+	serverOnlineCount,
+	serverOnlinePlayers,
+	deployInstanceOutput,
+	deployInstanceLatestOutput,
+	deployedInstanceRunning
+}: {
+	serverDetailDialog: boolean;
+	setServerDetailDialog: React.Dispatch<SetStateAction<boolean>>;
+} & UseStreamStatusesReturn) {
 	const userPayload = useContext(UserPayloadContext);
-
-	const loaded = IndexRoute.useLoaderData();
-
-	const [instance, setInstance] = useState<Instance | undefined>(loaded.instance);
-	const [instanceStatus, setInstanceStatus] = useState<InstanceStatus | undefined>(loaded.instanceStatus);
-	const [activeDeploymentTaskStatus, setActiveDeploymentTaskStatus] = useState<TaskStatus | undefined>(loaded.activeDeploymentTaskStatus);
-	const [serverInfo, setServerInfo] = useState<ServerInfo | undefined>(loaded.serverInfo);
-	const isServerRunning = useMemo(() => serverInfo?.running === true, [serverInfo]);
-	const [serverOnlineCount, setServerOnlineCount] = useState(loaded.serverInfo?.running ? loaded.serverInfo?.data?.players.online : 0);
-	const [serverOnlinePlayers, setServerOnlinePlayers] = useState<string[]>(loaded.serverInfo?.running ? loaded.serverInfo.onlinePlayers : []);
-
-	const deployedInstanceRunning = useMemo(() => instanceStatus === 'Running' && instance?.deletedAt === null && instance.deployed, [instance, instanceStatus]);
-
-	const currentInstanceStatusColor = useMemo(() => (instanceStatus === undefined ? 'before:bg-gray-500' : instanceStatus ? instanceStatusColor[instanceStatus] : 'before:bg-gray-500'), [instance, instanceStatus]);
-	const currentInstanceStatusText = useMemo(() => (instanceStatus === undefined ? '未创建' : instanceStatus ? instanceStatusText[instanceStatus] : '未知状态'), [instanceStatus]);
-
-	const streamManager = useContext(StreamManagerContext);
 
 	const [createInstanceDialog, setCreateInstanceDialog] = useState(false);
 	const [deleteInstanceDialog, setDeleteInstanceDialog] = useState(false);
 	const [deployInstanceDialog, setDeployInstanceDialog] = useState(false);
 	const [createAndDeployDialog, setCreateAndDeployDialog] = useState(false);
-	const [deployInstanceOutput, setDeployInstanceOutput] = useState('');
-	const [deployInstanceLatestOutput, setDeployInstanceLatestOutput] = useState('');
-
-	useEffect(() => {
-		streamManager.setHook('onInstance', async event => {
-			console.log('onInstance', event);
-			switch (event.type) {
-				case 'active_status_update': {
-					setInstanceStatus(event.data);
-					break;
-				}
-
-				case 'active_ip_update': {
-					setInstance(inst => {
-						if (!inst) return inst;
-						return {
-							...inst,
-							ip: event.data
-						};
-					});
-					break;
-				}
-
-				case 'deployment_task_status_update': {
-					setActiveDeploymentTaskStatus(event.data);
-					if (event.data !== 'running') {
-						streamManager.clearLastEventId();
-					}
-					if (event.data === 'success') {
-						toast.success('实例部署成功');
-						setInstance(inst => {
-							if (!inst) return inst;
-							return {
-								...inst,
-								deployed: true
-							};
-						});
-					}
-					break;
-				}
-
-				case 'created': {
-					setInstance(event.data);
-					break;
-				}
-
-				case 'notify': {
-					switch (event.data) {
-						case 'instance_deleted': {
-							const fetched = await fetchActiveOrLatestInstance();
-							setInstance(fetched!);
-							streamManager.clearLastEventId();
-							break;
-						}
-					}
-					break;
-				}
-
-				case 'create_and_deploy_failed': {
-					toast.error('一键创建失败：' + event.data);
-					break;
-				}
-
-				case 'create_and_deploy_step': {
-					toast.info('状态更新：' + event.data);
-					break;
-				}
-			}
-		});
-
-		streamManager.setHook('onDeployment', event => {
-			setDeployInstanceOutput(state => state + event);
-			setDeployInstanceLatestOutput(event);
-		});
-
-		streamManager.setHook('onServer', event => {
-			console.log('on server', event);
-			switch (event.type) {
-				case 'notify': {
-					if (event.data === 'running') {
-						toast.success('服务器已开启');
-						// @ts-ignore
-						setServerInfo(info => ({ ...info, running: true }));
-						fetchServerInfo().then(info => setServerInfo(info));
-					}
-
-					if (event.data === 'closed') {
-						toast.info('服务器已关闭');
-						setServerInfo(info => ({ ...info, running: false }));
-						setServerOnlineCount(0);
-						setServerOnlinePlayers([]);
-					}
-					break;
-				}
-
-				case 'online_count_update': {
-					setServerOnlineCount(event.data);
-					break;
-				}
-
-				case 'online_players_update': {
-					const array = JSON.parse(event.data);
-
-					if (!Array.isArray(array)) {
-						console.warn('invalid online player update data');
-						break;
-					}
-
-					setServerOnlinePlayers(array);
-
-					break;
-				}
-			}
-		});
-
-		return () => {
-			streamManager.rmHook('onDeployment');
-			streamManager.rmHook('onInstance');
-		};
-	}, []);
 
 	const [startOrStopServerDialog, setStartOrStopServerDialog] = useState(false);
 	const [backupOrArchiveDialog, setBackupOrArchiveDialog] = useState(false);
 	const [backupOrArchive, setBackupOrArchive] = useState<'backup' | 'archive'>('backup');
 	const [startOrStop, setStartOrStop] = useState<'start' | 'stop'>('start');
 
+	const currentInstanceStatusColor = useMemo(() => (instanceStatus === undefined ? 'before:bg-gray-500' : instanceStatus ? InstanceStatusColor[instanceStatus] : 'before:bg-gray-500'), [instance, instanceStatus]);
+	const currentInstanceStatusText = useMemo(() => (instanceStatus === undefined ? '未创建' : instanceStatus ? InstanceStatusWord[instanceStatus] : '未知状态'), [instanceStatus]);
 	const condDeployedInstanceRunning = useMemo(() => ({ cond: !deployedInstanceRunning, message: '无有效实例' }), [deployedInstanceRunning]);
 	const condAdmin = useMemo(() => ({ cond: userPayload.role !== 'admin', message: '权限不足' }), [userPayload]);
 
