@@ -205,14 +205,18 @@ export default function DetailDialog(props: DialogControl & { deployedInstanceRu
 	return (
 		<Wrapper open={props.open} setOpen={props.setOpen} title="周目信息" className="max-w-175!">
 			{refreshedAt.length > 0 && <p>数据更新于 {refreshedAt}</p>}
-			<Tabs defaultValue="properties">
+			<Tabs defaultValue="term">
 				<TabsList className="mb-2">
-					<TabsTrigger value="properties">游戏配置</TabsTrigger>
+					<TabsTrigger value="term">周目介绍</TabsTrigger>
+					<TabsTrigger value="properties">server.properties</TabsTrigger>
 					<TabsTrigger value="backupInfo">备份情况</TabsTrigger>
 					<TabsTrigger value="players">周目玩家{props.deployedInstanceRunning && cachedPlayers && ` (${cachedPlayers.length})`}</TabsTrigger>
 					<TabsTrigger value="screenfetch">Screenfetch</TabsTrigger>
 					<TabsTrigger value="sizes">存档大小</TabsTrigger>
 				</TabsList>
+				<TabsContent value="term">
+					<p>暂无周目介绍。</p>
+				</TabsContent>
 				<TabsContent value="properties">
 					{props.deployedInstanceRunning ? (
 						serverPropertiesLoading ? (

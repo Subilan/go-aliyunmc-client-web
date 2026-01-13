@@ -30,8 +30,8 @@ export default function WrappedTable<T extends Record<string, any>>({ data, keys
 				<TableHeader>
 					<TableRow>
 						{keys
-							.map(k => header[k])
-							.map(h => (
+							.map(k => header[k] || k)
+							.map((h: any) => (
 								<TableHead key={h}>{h}</TableHead>
 							))}
 					</TableRow>
@@ -40,7 +40,7 @@ export default function WrappedTable<T extends Record<string, any>>({ data, keys
 					{data.map(d => (
 						<TableRow key={getKey(d)}>
 							{keys.map(k => (
-								<TableCell key={getKey(d)+k.toString()}>{render[k] ? render[k](d) : d[k]}</TableCell>
+								<TableCell key={getKey(d) + k.toString()}>{render[k] ? render[k](d) : d[k]}</TableCell>
 							))}
 						</TableRow>
 					))}

@@ -10,7 +10,7 @@ export type Task = {
 export type TaskOverview = {
 	successCount: number;
 	unsuccessCount: number;
-	latest: JoinedTask;
+	latest?: JoinedTask;
 };
 
 export type JoinedTask = Task & {

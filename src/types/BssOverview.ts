@@ -6,5 +6,7 @@ export type BssOverview = {
 	cdtExpense: number;
 	totalExpense: number;
 	latestPayment: number;
+	expenseDays: number;
+	expenseAverage: number;
 	latestPaymentTime: string;
 };

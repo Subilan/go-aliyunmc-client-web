@@ -87,7 +87,7 @@ export default function Index() {
 					<Tabs defaultValue="main" onValueChange={v => setTabValue(v)}>
 						<TabsList className='mb-2'>
 							<TabsTrigger value="main">服务器</TabsTrigger>
-							<TabsTrigger value="analytics">统计信息</TabsTrigger>
+							<TabsTrigger value="analytics">统计</TabsTrigger>
 						</TabsList>
 						<TabsContent value="main">
 							<IndexMainSection serverDetailDialog={serverDetailDialog} setServerDetailDialog={setServerDetailDialog} />

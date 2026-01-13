@@ -8,9 +8,13 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import WrappedTable from '@/components/wrapped-table';
 import { req } from '@/lib/req';
 import times from '@/lib/times';
-import type { BssOverview } from '@/types/BssOverview';
+import { type BssOverview } from '@/types/BssOverview';
+import { ProductTypeWord } from "@/types/Transaction";
+import { ProductTypeColor } from "@/types/Transaction";
+import { type CommandExecOverview, CommandExecStatusWord, CommandExecStatusColor, CommandExecTypeWord, type JoinedCommandExec } from '@/types/CommandExec';
 import type { JoinedTask, TaskOverview } from '@/types/Task';
 import type { Transaction } from '@/types/Transaction';
+import type { WithTotal } from '@/types/WithTotal';
 import { InfoIcon } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
@@ -33,9 +37,9 @@ function useTableNavigation() {
 }
 
 async function fetchTransactions(page: number, pageSize: number) {
-	const { data, error } = await req<{ transactions: Transaction[]; total: number }>(`/bss/transactions?page=${page}&pageSize=${pageSize}`, 'get');
+	const { data, error } = await req<WithTotal<Transaction>>(`/bss/transactions?page=${page}&pageSize=${pageSize}`, 'get');
 
-	return error === null ? data : { transactions: [], total: 0 };
+	return error === null ? data : { data: [], total: 0 };
 }
 
 async function fetchBssOverview() {
@@ -44,19 +48,17 @@ async function fetchBssOverview() {
 	return error === null ? data : undefined;
 }
 
-const productTypeBadgeColors = {
-	ECS: 'bg-blue-100 text-blue-600',
-	OSS: 'bg-yellow-100 text-yellow-600',
-	YUNDISK: 'bg-gray-100 text-gray-600',
-	CDT_INTERNET_PUBLIC_CN: 'bg-orange-100 text-orange-600'
-};
+async function fetchCommandExecs(page: number, pageSize: number) {
+	const { data, error } = await req<WithTotal<JoinedCommandExec>>(`/server/exec/s?page=${page}&pageSize=${pageSize}`, 'get');
 
-const productTypeNames = {
-	ECS: '云服务器',
-	OSS: '对象存储',
-	YUNDISK: '云盘',
-	CDT_INTERNET_PUBLIC_CN: '公网流量'
-};
+	return error === null ? data : { data: [], total: 0 };
+}
+
+async function fetchCommandExecOverview() {
+	const { data, error } = await req<CommandExecOverview>(`/server/exec-overview`, 'get');
+
+	return error === null ? data : undefined;
+}
 
 export default function IndexDataSection() {
 	const [taskLoading, setTaskLoading] = useState(false);
@@ -75,6 +77,13 @@ export default function IndexDataSection() {
 	const [transactionTotal, setTransactionTotal] = useState(0);
 	const transactionPageCount = useMemo(() => Math.ceil(transactionTotal / bssNav.pageSize), [transactionTotal, bssNav.pageSize]);
 
+	const [cmds, setCommandExecs] = useState<JoinedCommandExec[]>([]);
+	const [cmdTotal, setCommandExecsTotal] = useState(0);
+	const [cmdOverview, setCommandExecOverview] = useState<CommandExecOverview>();
+	const [cmdLoading, setCommandExecsLoading] = useState(false);
+	const cmdNav = useTableNavigation();
+	const cmdPageCount = useMemo(() => Math.ceil(cmdTotal / cmdNav.pageSize), [cmdNav.pageSize, cmdTotal]);
+
 	const loadTask = useCallback(async () => {
 		setTaskLoading(true);
 		const overview = await fetchTaskOverview();
@@ -92,8 +101,19 @@ export default function IndexDataSection() {
 		setBssLoading(false);
 
 		if (overview) setBssOverview(overview);
-		setTransactions(result.transactions);
+		setTransactions(result.data);
 		setTransactionTotal(result.total);
+	}, []);
+
+	const loadCommandExecs = useCallback(async () => {
+		setCommandExecsLoading(true);
+		const commandExecs = await fetchCommandExecs(cmdNav.page, cmdNav.pageSize);
+		const commandExecOverview = await fetchCommandExecOverview();
+		setCommandExecsLoading(false);
+
+		if (commandExecOverview) setCommandExecOverview(commandExecOverview);
+		setCommandExecs(commandExecs.data);
+		setCommandExecsTotal(commandExecs.total);
 	}, []);
 
 	useEffect(() => {
@@ -104,14 +124,22 @@ export default function IndexDataSection() {
 
 	useEffect(() => {
 		fetchTransactions(bssNav.page, bssNav.pageSize).then(result => {
-			setTransactions(result.transactions);
+			setTransactions(result.data);
 			setTransactionTotal(result.total);
 		});
 	}, [bssNav.page, bssNav.pageSize]);
 
 	useEffect(() => {
+		fetchCommandExecs(cmdNav.page, cmdNav.pageSize).then(result => {
+			setCommandExecs(result.data);
+			setCommandExecsTotal(result.total);
+		});
+	}, [cmdNav.page, cmdNav.pageSize]);
+
+	useEffect(() => {
 		loadTask();
 		loadBss();
+		loadCommandExecs();
 	}, []);
 
 	return (
@@ -154,6 +182,22 @@ export default function IndexDataSection() {
 												</div>
 											</div>
 											<div className="flex flex-col gap-2">
+												<span>平均日消费</span>
+												<div className="text-2xl">
+													¥{bssOverview.expenseAverage.toFixed(2)}
+													<Popover>
+														<PopoverTrigger asChild>
+															<Button variant={'ghost'} size={'icon-xs'}>
+																<InfoIcon />
+															</Button>
+														</PopoverTrigger>
+														<PopoverContent className="w-max">
+															<p>从数据中统计的 {bssOverview.expenseDays} 个账单日平均结果</p>
+														</PopoverContent>
+													</Popover>
+												</div>
+											</div>
+											<div className="flex flex-col gap-2">
 												<span>最近充值</span>
 												<div className="text-2xl">
 													¥{bssOverview.latestPayment.toFixed(2)} <small className="text-neutral-500">（{times.formatDateAgo(bssOverview.latestPaymentTime)}）</small>
@@ -186,11 +230,11 @@ export default function IndexDataSection() {
 													return t.remarks ? (
 														<Badge
 															className={(() => {
-																return productTypeBadgeColors[t.remarks];
+																return ProductTypeColor[t.remarks];
 															})()}
 														>
 															{(() => {
-																return productTypeNames[t.remarks];
+																return ProductTypeWord[t.remarks];
 															})()}
 														</Badge>
 													) : (
@@ -231,13 +275,15 @@ export default function IndexDataSection() {
 												<span>失败总数</span>
 												<div className="text-2xl">{taskOverview.unsuccessCount}</div>
 											</div>
-											<div className="flex flex-col gap-2">
-												<span>最近执行</span>
-												<div className="text-2xl">
-													{times.formatDateAgo(taskOverview.latest.createdAt)}
-													<small className="text-neutral-500">（由 {taskOverview.latest.username} 触发）</small>
+											{taskOverview.latest && (
+												<div className="flex flex-col gap-2">
+													<span>最近执行</span>
+													<div className="text-2xl">
+														{times.formatDateAgo(taskOverview.latest.createdAt)}
+														<small className="text-neutral-500">（由 {taskOverview.latest.username} 触发）</small>
+													</div>
 												</div>
-											</div>
+											)}
 										</div>
 									)}
 									<WrappedTable
@@ -249,7 +295,7 @@ export default function IndexDataSection() {
 											type: '任务类型',
 											status: '状态',
 											createdAt: '创建时间',
-											updatedAt: '结束时间',
+											updatedAt: '耗时',
 											username: '发起者'
 										}}
 										render={{
@@ -267,13 +313,84 @@ export default function IndexDataSection() {
 												</>
 											),
 											createdAt: t => times.formatDatetime(t.createdAt),
-											updatedAt: t => (t.updatedAt ? times.formatDatetime(t.updatedAt) : '-')
+											updatedAt: t => (t.updatedAt ? Math.abs(times.formatDuration(t.createdAt, t.updatedAt).asSeconds()) + 's' : '-')
 										}}
 										pageSize={tasksNav.pageSize}
 										setPageSize={tasksNav.setPageSize}
 										page={tasksNav.page}
 										setPage={tasksNav.setPage}
 										pageCount={taskPageCount}
+									/>
+								</div>
+							)}
+						</CardContent>
+					</Card>
+				</section>
+				<section>
+					<Card>
+						<CardContent>
+							{cmdLoading ? (
+								<Spinner />
+							) : (
+								<div className="flex flex-col gap-3">
+									{cmdOverview && (
+										<div className="flex items-center gap-10">
+											<div className="flex flex-col gap-2">
+												<span>成功执行</span>
+												<div className="text-2xl">{cmdOverview.successCount}</div>
+											</div>
+											<div className="flex flex-col gap-2">
+												<span>失败执行</span>
+												<div className="text-2xl">{cmdOverview.errorCount}</div>
+											</div>
+											{cmdOverview.latestCommandExec && (
+												<div className="flex flex-col gap-2">
+													<span>最近执行</span>
+													<div className="text-2xl">
+														{times.formatDateAgo(cmdOverview.latestCommandExec.createdAt)}
+														<small className="text-neutral-500">{cmdOverview.latestCommandExec.auto ? '（自动执行）' : `（由 ${cmdOverview.latestCommandExec.username} 触发）`}</small>
+													</div>
+												</div>
+											)}
+										</div>
+									)}
+									<WrappedTable
+										data={cmds}
+										getKey={c => c.id}
+										keys={['type', 'status', 'username', 'createdAt', 'updatedAt', 'comment']}
+										header={{
+											type: '指令',
+											status: '状态',
+											username: '执行者',
+											createdAt: '开始时间',
+											updatedAt: '耗时',
+											comment: '备注'
+										}}
+										render={{
+											type: c => CommandExecTypeWord[c.type],
+											status: c => <Badge className={CommandExecStatusColor[c.status]}>{CommandExecStatusWord[c.status]}</Badge>,
+											createdAt: c => times.formatDatetime(c.createdAt),
+											updatedAt: c => Math.abs(times.formatDuration(c.createdAt, c.updatedAt).asSeconds()) + 's',
+											comment: c =>
+												c.comment && c.comment.length > 0 ? (
+													<Popover>
+														<PopoverTrigger asChild>
+															<Button variant={'ghost'} size={'icon-xs'}>
+																<InfoIcon />
+															</Button>
+														</PopoverTrigger>
+														<PopoverContent>{c.comment}</PopoverContent>
+													</Popover>
+												) : (
+													'-'
+												),
+											username: c => (c.auto ? '自动' : c.username)
+										}}
+										pageSize={cmdNav.pageSize}
+										setPageSize={cmdNav.setPageSize}
+										page={cmdNav.page}
+										setPage={cmdNav.setPage}
+										pageCount={cmdPageCount}
 									/>
 								</div>
 							)}
