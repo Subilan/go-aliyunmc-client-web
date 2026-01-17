@@ -41,7 +41,7 @@ import mchead from '@/lib/mchead';
 import OptDropdownMenuItem from '@/components/optional-dropdown-menu-item';
 import OptTooltip from '@/components/optional-tooltip';
 import DetailDialog from '@/components/dialogs/index/DetailDialog';
-import type { UseStreamReturn } from '@/useStream';
+import type { UseStreamReturn } from '@/hooks/useStream';
 import { InstanceStatusColor, InstanceStatusWord } from '@/types/Instance';
 
 export default function IndexMainSection({
@@ -79,8 +79,8 @@ export default function IndexMainSection({
 			instanceStatus === undefined
 				? 'before:bg-gray-500'
 				: instanceStatus
-				? InstanceStatusColor[instanceStatus]
-				: 'before:bg-gray-500',
+					? InstanceStatusColor[instanceStatus]
+					: 'before:bg-gray-500',
 		[instance, instanceStatus]
 	);
 	const currentInstanceStatusText = useMemo(
@@ -88,8 +88,8 @@ export default function IndexMainSection({
 			instanceStatus === undefined
 				? '未创建'
 				: instanceStatus
-				? InstanceStatusWord[instanceStatus]
-				: '未知状态',
+					? InstanceStatusWord[instanceStatus]
+					: '未知状态',
 		[instanceStatus]
 	);
 	const condDeployedInstanceRunning = useMemo(
@@ -381,7 +381,7 @@ export default function IndexMainSection({
 									)}
 								</CardHeader>
 								<CardContent>
-									{serverOnlineCount === 0 && (
+									{serverOnlineCount <= 0 && (
 										<>
 											{isServerRunning ? (
 												<Empty>

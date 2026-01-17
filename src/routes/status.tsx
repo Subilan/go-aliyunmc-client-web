@@ -10,7 +10,7 @@ import times from '@/lib/times';
 import { cn } from '@/lib/utils';
 import { RootRoute, router } from '@/root';
 import { InstanceStatusColor, InstanceStatusWord } from '@/types/Instance';
-import useSimpleStream from '@/useSimpleStream';
+import useSimpleStream from '@/hooks/useSimpleStream';
 import { createRoute } from '@tanstack/react-router';
 import { ArrowRightIcon, CogIcon, CopyIcon, ServerIcon, UsersIcon } from 'lucide-react';
 import { useEffect, useState } from 'react';

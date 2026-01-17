@@ -1,3 +1,7 @@
+import useBgRefresh from '@/hooks/useBgRefresher';
+import { fetchActiveInstanceStatus } from '@/lib/requests/fetchActiveInstanceStatus';
+import { fetchActiveOrLatestInstance } from '@/lib/requests/fetchActiveOrLatestInstance';
+import { fetchServerInfo } from '@/lib/requests/fetchServerInfo';
 import { SimpleStreamManager } from '@/stream';
 import type { InstanceStatus, Instance } from '@/types/Instance';
 import { useEffect, useState } from 'react';
@@ -13,11 +17,31 @@ export default function useSimpleStream(
 		instance: Instance;
 	}>
 ) {
-	const [onlinePlayerCount, setOnlinePlayerCount] = useState(defaultValues?.onlinePlayerCount || 0);
-	const [onlinePlayers, setOnlinePlayers] = useState<string[]>(defaultValues?.onlinePlayers || []);
+	const [onlinePlayerCount, setOnlinePlayerCount] = useState(
+		defaultValues?.onlinePlayerCount || 0
+	);
+	const [onlinePlayers, setOnlinePlayers] = useState<string[]>(
+		defaultValues?.onlinePlayers || []
+	);
 	const [isServerRunning, setIsServerRunning] = useState(defaultValues?.isSeverRunning || false);
-	const [instanceStatus, setInstanceStatus] = useState<InstanceStatus>(defaultValues?.instanceStatus || '');
+	const [instanceStatus, setInstanceStatus] = useState<InstanceStatus>(
+		defaultValues?.instanceStatus || ''
+	);
 	const [instance, setInstance] = useState<Instance | undefined>(defaultValues?.instance);
+
+	useBgRefresh(async () => {
+		const result = {
+			instance: await fetchActiveOrLatestInstance(),
+			instanceStatus: await fetchActiveInstanceStatus(),
+			server: await fetchServerInfo()
+		};
+
+		setOnlinePlayers(result.server?.onlinePlayers || []);
+		setOnlinePlayerCount(result.server?.onlinePlayers ? result.server.onlinePlayers.length : 0);
+		setInstanceStatus(result.instanceStatus || '');
+		setInstance(result.instance);
+		setIsServerRunning(result.server?.running || false);
+	});
 
 	useEffect(() => {
 		const streamManager = new SimpleStreamManager();

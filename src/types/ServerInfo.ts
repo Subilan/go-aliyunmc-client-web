@@ -1,6 +1,6 @@
 export type ServerInfo = {
 	running: boolean;
-	data: {
+	data?: {
 		version: {
 			name: {
 				raw: string;

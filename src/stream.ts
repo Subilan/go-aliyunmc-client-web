@@ -10,7 +10,15 @@ const ReceivedEventRaw = z.object({
 });
 
 const InstanceEvent = z.object({
-	type: z.literal(['notify', 'active_status_update', 'active_ip_update', 'created', 'deployment_task_status_update', 'create_and_deploy_failed', 'create_and_deploy_step']),
+	type: z.literal([
+		'notify',
+		'active_status_update',
+		'active_ip_update',
+		'created',
+		'deployment_task_status_update',
+		'create_and_deploy_failed',
+		'create_and_deploy_step'
+	]),
 	data: z.any()
 });
 
@@ -62,7 +70,11 @@ export class StreamManager {
 		localStorage.removeItem(LS_KEY_LAST_EVENT_ID);
 	}
 
-	setHook<T extends keyof StreamHookDictionary>(key: T, value: StreamHookDictionary[T], addendum: boolean = true) {
+	setHook<T extends keyof StreamHookDictionary>(
+		key: T,
+		value: StreamHookDictionary[T],
+		addendum: boolean = true
+	) {
 		if (key === 'onDeployment' && value && addendum) {
 			for (const item of this.deploymentBuffer) {
 				value(item as any);
@@ -177,7 +189,7 @@ export class StreamManager {
 				}
 			},
 			onerror(err) {
-				toast.error(err);
+				console.warn('stream gives error: ' + err);
 			},
 			onclose() {
 				console.log('stream closed');
@@ -194,10 +206,13 @@ export class SimpleStreamManager {
 	}
 
 	abort() {
-		this.abortController.abort()
+		this.abortController.abort();
 	}
 
-	listen(onServer: StreamHookDictionary['onServer'], onInstance: StreamHookDictionary['onInstance']) {
+	listen(
+		onServer: StreamHookDictionary['onServer'],
+		onInstance: StreamHookDictionary['onInstance']
+	) {
 		this.abortController = new AbortController();
 
 		fetchEventSource('http://127.0.0.1:33791/stream/simple-public', {
@@ -243,7 +258,7 @@ export class SimpleStreamManager {
 				}
 			},
 			onerror(err) {
-				toast.error(err);
+				console.warn('stream gives error: ' + err);
 			},
 			onclose() {
 				console.log('simple, stream closed');

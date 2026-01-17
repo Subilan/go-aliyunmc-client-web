@@ -17,7 +17,8 @@ export default function ServerInfoDialog({
 					data={{
 						状态: server.running ? '在线' : '离线',
 						在线玩家: server && server.running ? server.onlinePlayers.length : 0,
-						版本: server && server.running ? server.data.version.name.clean : '-'
+						版本:
+							server && server.running ? server.data?.version.name.clean || '-' : '-'
 					}}
 				></DataListKv>
 			) : (

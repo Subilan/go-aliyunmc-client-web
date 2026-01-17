@@ -10,7 +10,7 @@ import { fetchServerInfo } from '@/lib/requests/fetchServerInfo';
 import { RootRoute, router } from '@/root';
 import IndexDataSection from '@/routes/index-sections/data';
 import IndexMainSection from '@/routes/index-sections/main';
-import { useStream } from '@/useStream';
+import { useStream } from '@/hooks/useStream';
 import { createRoute, redirect } from '@tanstack/react-router';
 import { useContext, useEffect, useState } from 'react';
 
@@ -35,6 +35,7 @@ export const IndexRoute = createRoute({
 
 export default function Index() {
 	const userPayload = useContext(UserPayloadContext);
+	const loaded = IndexRoute.useLoaderData();
 
 	useEffect(() => {
 		if (!userPayload.valid && userPayload.loaded) {
@@ -47,7 +48,12 @@ export default function Index() {
 
 	const [tabValue, setTabValue] = useState('main');
 
-	const streamData = useStream();
+	const streamData = useStream({
+		instance: loaded.instance,
+		instanceStatus: loaded.instanceStatus,
+		activeDeploymentTaskStatus: loaded.activeDeploymentTaskStatus,
+		serverInfo: loaded.serverInfo
+	});
 
 	return (
 		<>
@@ -70,7 +76,11 @@ export default function Index() {
 							<TabsTrigger value="analytics">统计</TabsTrigger>
 						</TabsList>
 						<TabsContent value="main">
-							<IndexMainSection serverDetailDialog={serverDetailDialog} setServerDetailDialog={setServerDetailDialog} {...streamData} />
+							<IndexMainSection
+								serverDetailDialog={serverDetailDialog}
+								setServerDetailDialog={setServerDetailDialog}
+								{...streamData}
+							/>
 						</TabsContent>
 						<TabsContent value="analytics">
 							<IndexDataSection />

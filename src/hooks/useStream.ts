@@ -1,6 +1,5 @@
-import { IndexRoute } from '@/routes';
-import { fetchActiveOrLatestInstance } from './lib/requests/fetchActiveOrLatestInstance';
-import { fetchServerInfo } from './lib/requests/fetchServerInfo';
+import { fetchActiveOrLatestInstance } from '../lib/requests/fetchActiveOrLatestInstance';
+import { fetchServerInfo } from '../lib/requests/fetchServerInfo';
 import type { Instance, InstanceStatus } from '@/types/Instance';
 import type { ServerInfo } from '@/types/ServerInfo';
 import type { TaskStatus } from '@/types/Task';
@@ -9,26 +8,60 @@ import { toast } from 'sonner';
 import { StreamManager } from '@/stream';
 import { useLocalStorage } from '@uidotdev/usehooks';
 import { LS_KEY_USER_LOGIN_TOKEN } from '@/consts';
+import useBgRefresher from '@/hooks/useBgRefresher';
+import { fetchActiveInstanceStatus } from '@/lib/requests/fetchActiveInstanceStatus';
+import { fetchActiveDeploymentTaskStatus } from '@/lib/requests/fetchActiveDeploymentTaskStatus';
 
 export type UseStreamReturn = ReturnType<typeof useStream>;
 
-export function useStream() {
-	const loaded = IndexRoute.useLoaderData();
-	const [instance, setInstance] = useState<Instance | undefined>(loaded.instance);
-	const [instanceStatus, setInstanceStatus] = useState<InstanceStatus | undefined>(loaded.instanceStatus);
-	const [activeDeploymentTaskStatus, setActiveDeploymentTaskStatus] = useState<TaskStatus | undefined>(loaded.activeDeploymentTaskStatus);
-	const [serverInfo, setServerInfo] = useState<ServerInfo | undefined>(loaded.serverInfo);
+export function useStream(
+	defaults: Partial<{
+		instance: Instance;
+		instanceStatus: InstanceStatus;
+		activeDeploymentTaskStatus: TaskStatus;
+		serverInfo: ServerInfo;
+	}>
+) {
+	const [instance, setInstance] = useState<Instance | undefined>(defaults.instance);
+	const [instanceStatus, setInstanceStatus] = useState<InstanceStatus | undefined>(
+		defaults.instanceStatus
+	);
+	const [activeDeploymentTaskStatus, setActiveDeploymentTaskStatus] = useState<
+		TaskStatus | undefined
+	>(defaults.activeDeploymentTaskStatus);
+	const [serverInfo, setServerInfo] = useState<ServerInfo | undefined>(defaults.serverInfo);
 	const isServerRunning = useMemo(() => serverInfo?.running === true, [serverInfo]);
-	const [serverOnlineCount, setServerOnlineCount] = useState(loaded.serverInfo?.running ? loaded.serverInfo?.data?.players.online : 0);
-	const [serverOnlinePlayers, setServerOnlinePlayers] = useState<string[]>(loaded.serverInfo?.running ? loaded.serverInfo.onlinePlayers || [] : []);
-	const deployedInstanceRunning = useMemo(() => instanceStatus === 'Running' && instance?.deletedAt === null && instance.deployed, [instance, instanceStatus]);
+	const [serverOnlineCount, setServerOnlineCount] = useState(
+		defaults.serverInfo?.running ? defaults.serverInfo?.data?.players.online || 0 : 0
+	);
+	const [serverOnlinePlayers, setServerOnlinePlayers] = useState<string[]>(
+		defaults.serverInfo?.running ? defaults.serverInfo.onlinePlayers || [] : []
+	);
+	const deployedInstanceRunning = useMemo(
+		() => instanceStatus === 'Running' && instance?.deletedAt === null && instance.deployed,
+		[instance, instanceStatus]
+	);
 	const [deployInstanceOutput, setDeployInstanceOutput] = useState('');
 	const [deployInstanceLatestOutput, setDeployInstanceLatestOutput] = useState('');
 	const [userLoginToken] = useLocalStorage<string>(LS_KEY_USER_LOGIN_TOKEN, '');
 	const [streamManager] = useState(new StreamManager());
 
+	useBgRefresher(async () => {
+		const result = {
+			instance: await fetchActiveOrLatestInstance(),
+			instanceStatus: await fetchActiveInstanceStatus(),
+			activeDeploymentTaskStatus: await fetchActiveDeploymentTaskStatus(),
+			serverInfo: await fetchServerInfo()
+		};
+
+		setInstance(result.instance);
+		setInstanceStatus(result.instanceStatus);
+		setActiveDeploymentTaskStatus(result.activeDeploymentTaskStatus);
+		setServerInfo(result.serverInfo);
+	});
+
 	useEffect(() => {
-		console.log('initializing stream')
+		console.log('initializing stream');
 		streamManager.listen(userLoginToken);
 		streamManager.setHook('onInstance', async event => {
 			// console.log('onInstance', event);
