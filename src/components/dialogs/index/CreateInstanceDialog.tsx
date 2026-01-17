@@ -9,19 +9,17 @@ import { useCallback, useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import Wrapper from '@/components/dialogs/Wrapper';
 
-export type PreferredInstanceCharge = {
+export type PreferredInstance = {
+	instanceType: string;
+	memory: number;
+	cpuCoreCount: number;
 	zoneId: string;
-	typeAndTradePrice: {
-		instanceType: string;
-		cpuCoreCount: number;
-		memorySize: number;
-		tradePrice: number;
-	};
+	tradePrice: number;
 };
 
 export default function CreateInstanceDialog(props: DialogControl) {
 	const [bestInstanceTypeLoading, setBestInstanceTypeLoading] = useState(false);
-	const [bestInstanceType, setBestInstanceType] = useState<PreferredInstanceCharge>();
+	const [bestInstanceType, setBestInstanceType] = useState<PreferredInstance>();
 	const [bestInstanceTypeError, setBestInstanceTypeError] = useState<string | null>(null);
 
 	const [createInstanceLoading, setCreateInstanceLoading] = useState(false);
@@ -32,7 +30,7 @@ export default function CreateInstanceDialog(props: DialogControl) {
 
 	const refreshBestInstanceType = useCallback(() => {
 		setBestInstanceTypeLoading(true);
-		req<PreferredInstanceCharge>('/instance/preferred-charge', 'GET')
+		req<PreferredInstance>('/instance/preferred-charge', 'GET')
 			.then(({ data, error }) => {
 				if (error !== null) {
 					setBestInstanceTypeError(error);
@@ -54,7 +52,10 @@ export default function CreateInstanceDialog(props: DialogControl) {
 					<Button
 						onClick={async () => {
 							setCreateInstanceLoading(true);
-							const { error } = await req('/instance/create-preferred?autoVSwitch=1', 'GET');
+							const { error } = await req(
+								'/instance/create-preferred?autoVSwitch=1',
+								'GET'
+							);
 							setCreateInstanceLoading(false);
 
 							if (error !== null) {
@@ -65,9 +66,17 @@ export default function CreateInstanceDialog(props: DialogControl) {
 							toast.success('创建成功');
 							props.setOpen(false);
 						}}
-						disabled={createInstanceLoading || bestInstanceTypeLoading || bestInstanceTypeError !== null}
+						disabled={
+							createInstanceLoading ||
+							bestInstanceTypeLoading ||
+							bestInstanceTypeError !== null
+						}
 					>
-						{bestInstanceTypeLoading ? '请等待' : <>创建实例 {createInstanceLoading && <Spinner />}</>}
+						{bestInstanceTypeLoading ? (
+							'请等待'
+						) : (
+							<>创建实例 {createInstanceLoading && <Spinner />}</>
+						)}
 					</Button>
 				</>
 			}
@@ -80,20 +89,32 @@ export default function CreateInstanceDialog(props: DialogControl) {
 						<AlertTitle>无法找到实例</AlertTitle>
 						<AlertDescription>错误：{bestInstanceTypeError}</AlertDescription>
 						<AlertAction>
-							<Button variant={'outline'} size={'icon-xs'} onClick={() => refreshBestInstanceType()}>
+							<Button
+								variant={'outline'}
+								size={'icon-xs'}
+								onClick={() => refreshBestInstanceType()}
+							>
 								<RefreshCwIcon />
 							</Button>
 						</AlertAction>
 					</>
 				) : (
 					<>
-						<AlertTitle>{bestInstanceTypeLoading ? '寻找最优实例中...' : bestInstanceType?.typeAndTradePrice.instanceType}</AlertTitle>
+						<AlertTitle>
+							{bestInstanceTypeLoading
+								? '寻找最优实例中...'
+								: bestInstanceType?.instanceType}
+						</AlertTitle>
 						<AlertDescription>
 							{bestInstanceTypeLoading ? (
 								'可能需要至多 1 分钟，请耐心等待'
 							) : (
 								<div className="flex items-center gap-2">
-									{bestInstanceType?.zoneId} <Separator orientation="vertical" /> {bestInstanceType?.typeAndTradePrice.cpuCoreCount} vCPU <Separator orientation="vertical" /> {bestInstanceType?.typeAndTradePrice.memorySize} GiB <Separator orientation="vertical" /> ¥{bestInstanceType?.typeAndTradePrice.tradePrice.toFixed(2)}/h
+									{bestInstanceType?.zoneId} <Separator orientation="vertical" />{' '}
+									{bestInstanceType?.cpuCoreCount} vCPU{' '}
+									<Separator orientation="vertical" /> {bestInstanceType?.memory}{' '}
+									GiB <Separator orientation="vertical" /> ¥
+									{bestInstanceType?.tradePrice.toFixed(2)}/h
 								</div>
 							)}
 						</AlertDescription>

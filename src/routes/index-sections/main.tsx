@@ -6,15 +6,34 @@ import times from '@/lib/times';
 import DataListKv from '@/components/data-list-kv';
 import { CopyIcon, InfoIcon, MoreHorizontalIcon, RouteOffIcon, ServerOffIcon } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
-import { cn } from '@/lib/utils';
-import { Item, ItemContent, ItemMedia, ItemTitle, ItemDescription, ItemActions } from '@/components/ui/item';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { cn, copy } from '@/lib/utils';
+import {
+	Item,
+	ItemContent,
+	ItemMedia,
+	ItemTitle,
+	ItemDescription,
+	ItemActions
+} from '@/components/ui/item';
+import {
+	DropdownMenu,
+	DropdownMenuContent,
+	DropdownMenuItem,
+	DropdownMenuTrigger
+} from '@/components/ui/dropdown-menu';
 import CreateInstanceDialog from '@/components/dialogs/index/CreateInstanceDialog';
 import DeleteInstanceDialog from '@/components/dialogs/index/DeleteInstanceDialog';
 import DeployInstanceDialog from '@/components/dialogs/index/DeployInstanceDialog';
 import CreateAndDeployDialog from '@/components/dialogs/index/CreateAndDeployDialog';
 import { Spinner } from '@/components/ui/spinner';
-import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty';
+import {
+	Empty,
+	EmptyContent,
+	EmptyDescription,
+	EmptyHeader,
+	EmptyMedia,
+	EmptyTitle
+} from '@/components/ui/empty';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import StartOrStopServerDialog from '@/components/dialogs/index/StartOrStopServerDialog';
 import BackupOrArchiveDialog from '@/components/dialogs/index/BackupOrArchiveDialog';
@@ -55,21 +74,77 @@ export default function IndexMainSection({
 	const [backupOrArchive, setBackupOrArchive] = useState<'backup' | 'archive'>('backup');
 	const [startOrStop, setStartOrStop] = useState<'start' | 'stop'>('start');
 
-	const currentInstanceStatusColor = useMemo(() => (instanceStatus === undefined ? 'before:bg-gray-500' : instanceStatus ? InstanceStatusColor[instanceStatus] : 'before:bg-gray-500'), [instance, instanceStatus]);
-	const currentInstanceStatusText = useMemo(() => (instanceStatus === undefined ? '未创建' : instanceStatus ? InstanceStatusWord[instanceStatus] : '未知状态'), [instanceStatus]);
-	const condDeployedInstanceRunning = useMemo(() => ({ cond: !deployedInstanceRunning, message: '无有效实例' }), [deployedInstanceRunning]);
-	const condAdmin = useMemo(() => ({ cond: userPayload.role !== 'admin', message: '权限不足' }), [userPayload]);
+	const currentInstanceStatusColor = useMemo(
+		() =>
+			instanceStatus === undefined
+				? 'before:bg-gray-500'
+				: instanceStatus
+				? InstanceStatusColor[instanceStatus]
+				: 'before:bg-gray-500',
+		[instance, instanceStatus]
+	);
+	const currentInstanceStatusText = useMemo(
+		() =>
+			instanceStatus === undefined
+				? '未创建'
+				: instanceStatus
+				? InstanceStatusWord[instanceStatus]
+				: '未知状态',
+		[instanceStatus]
+	);
+	const condDeployedInstanceRunning = useMemo(
+		() => ({ cond: !deployedInstanceRunning, message: '无有效实例' }),
+		[deployedInstanceRunning]
+	);
+	const condAdmin = useMemo(
+		() => ({ cond: userPayload.role !== 'admin', message: '权限不足' }),
+		[userPayload]
+	);
 
 	return (
 		userPayload.valid && (
 			<>
-				<DetailDialog deployedInstanceRunning={deployedInstanceRunning} open={serverDetailDialog} setOpen={setServerDetailDialog} />
-				{deployedInstanceRunning && <StartOrStopServerDialog type={startOrStop} open={startOrStopServerDialog} setOpen={setStartOrStopServerDialog} />}
-				{deployedInstanceRunning && <BackupOrArchiveDialog type={backupOrArchive} open={backupOrArchiveDialog} setOpen={setBackupOrArchiveDialog} />}
-				<CreateInstanceDialog open={createInstanceDialog} setOpen={setCreateInstanceDialog} />
-				<DeleteInstanceDialog deployedInstanceRunning={deployedInstanceRunning} open={deleteInstanceDialog} setOpen={setDeleteInstanceDialog} />
-				<DeployInstanceDialog streamManager={streamManager} latestOutput={deployInstanceLatestOutput} status={activeDeploymentTaskStatus} setStatus={setActiveDeploymentTaskStatus} output={deployInstanceOutput} open={deployInstanceDialog} setOpen={setDeployInstanceDialog} />
-				<CreateAndDeployDialog open={createAndDeployDialog} setOpen={setCreateAndDeployDialog} />
+				<DetailDialog
+					deployedInstanceRunning={deployedInstanceRunning}
+					open={serverDetailDialog}
+					setOpen={setServerDetailDialog}
+				/>
+				{deployedInstanceRunning && (
+					<StartOrStopServerDialog
+						type={startOrStop}
+						open={startOrStopServerDialog}
+						setOpen={setStartOrStopServerDialog}
+					/>
+				)}
+				{deployedInstanceRunning && (
+					<BackupOrArchiveDialog
+						type={backupOrArchive}
+						open={backupOrArchiveDialog}
+						setOpen={setBackupOrArchiveDialog}
+					/>
+				)}
+				<CreateInstanceDialog
+					open={createInstanceDialog}
+					setOpen={setCreateInstanceDialog}
+				/>
+				<DeleteInstanceDialog
+					deployedInstanceRunning={deployedInstanceRunning}
+					open={deleteInstanceDialog}
+					setOpen={setDeleteInstanceDialog}
+				/>
+				<DeployInstanceDialog
+					streamManager={streamManager}
+					latestOutput={deployInstanceLatestOutput}
+					status={activeDeploymentTaskStatus}
+					setStatus={setActiveDeploymentTaskStatus}
+					output={deployInstanceOutput}
+					open={deployInstanceDialog}
+					setOpen={setDeployInstanceDialog}
+				/>
+				<CreateAndDeployDialog
+					open={createAndDeployDialog}
+					setOpen={setCreateAndDeployDialog}
+				/>
 				<div className="flex flex-col gap-5">
 					{activeDeploymentTaskStatus === 'running' && (
 						<Item variant={'outline'}>
@@ -78,10 +153,14 @@ export default function IndexMainSection({
 							</ItemMedia>
 							<ItemContent>
 								<ItemTitle>有部署正在进行中</ItemTitle>
-								<ItemDescription>正在安装基础软件、Java 并拉取服务器数据中。</ItemDescription>
+								<ItemDescription>
+									正在安装基础软件、Java 并拉取服务器数据中。
+								</ItemDescription>
 							</ItemContent>
 							<ItemActions>
-								<Button onClick={() => setDeployInstanceDialog(true)}>查看状态</Button>
+								<Button onClick={() => setDeployInstanceDialog(true)}>
+									查看状态
+								</Button>
 							</ItemActions>
 						</Item>
 					)}
@@ -92,10 +171,15 @@ export default function IndexMainSection({
 							</ItemMedia>
 							<ItemContent>
 								<ItemTitle>无实例</ItemTitle>
-								<ItemDescription>当前没有正在运行的实例。要快速开始游戏，请单击「一键创建」。</ItemDescription>
+								<ItemDescription>
+									当前没有正在运行的实例。要快速开始游戏，请单击「一键创建」。
+								</ItemDescription>
 							</ItemContent>
 							<ItemActions>
-								<Button variant={'outline'} onClick={() => setCreateAndDeployDialog(true)}>
+								<Button
+									variant={'outline'}
+									onClick={() => setCreateAndDeployDialog(true)}
+								>
 									一键创建
 								</Button>
 							</ItemActions>
@@ -111,7 +195,10 @@ export default function IndexMainSection({
 							</EmptyHeader>
 							<EmptyContent>
 								<OptTooltip show={userPayload.role !== 'admin'} content="权限不足">
-									<Button disabled={userPayload.role !== 'admin'} onClick={() => setCreateInstanceDialog(true)}>
+									<Button
+										disabled={userPayload.role !== 'admin'}
+										onClick={() => setCreateInstanceDialog(true)}
+									>
 										创建实例
 									</Button>
 								</OptTooltip>
@@ -130,19 +217,40 @@ export default function IndexMainSection({
 										</DropdownMenuTrigger>
 										<DropdownMenuContent>
 											<OptTooltip
-												show={(activeDeploymentTaskStatus === undefined && userPayload.role !== 'admin') || deployedInstanceRunning}
+												show={
+													(activeDeploymentTaskStatus === undefined &&
+														userPayload.role !== 'admin') ||
+													deployedInstanceRunning
+												}
 												content={(() => {
-													if (activeDeploymentTaskStatus === undefined && userPayload.role !== 'admin') return '权限不足';
-													if (deployedInstanceRunning) return '无有效实例';
+													if (
+														activeDeploymentTaskStatus === undefined &&
+														userPayload.role !== 'admin'
+													)
+														return '权限不足';
+													if (deployedInstanceRunning)
+														return '无有效实例';
 													return '';
 												})()}
 											>
-												<DropdownMenuItem disabled={(activeDeploymentTaskStatus === undefined && userPayload.role !== 'admin') || deployedInstanceRunning} onClick={() => setDeployInstanceDialog(true)}>
-													{activeDeploymentTaskStatus === undefined ? '触发部署' : '部署状态'}
+												<DropdownMenuItem
+													disabled={
+														(activeDeploymentTaskStatus === undefined &&
+															userPayload.role !== 'admin') ||
+														deployedInstanceRunning
+													}
+													onClick={() => setDeployInstanceDialog(true)}
+												>
+													{activeDeploymentTaskStatus === undefined
+														? '触发部署'
+														: '部署状态'}
 												</DropdownMenuItem>
 											</OptTooltip>
 											<OptDropdownMenuItem
-												conditions={[condAdmin, condDeployedInstanceRunning]}
+												conditions={[
+													condAdmin,
+													condDeployedInstanceRunning
+												]}
 												onClick={() => {
 													setBackupOrArchive('backup');
 													setBackupOrArchiveDialog(true);
@@ -151,7 +259,10 @@ export default function IndexMainSection({
 												触发服务器备份
 											</OptDropdownMenuItem>
 											<OptDropdownMenuItem
-												conditions={[condAdmin, condDeployedInstanceRunning]}
+												conditions={[
+													condAdmin,
+													condDeployedInstanceRunning
+												]}
 												onClick={() => {
 													setBackupOrArchive('archive');
 													setBackupOrArchiveDialog(true);
@@ -159,7 +270,11 @@ export default function IndexMainSection({
 											>
 												触发服务器归档
 											</OptDropdownMenuItem>
-											<OptDropdownMenuItem conditions={[condAdmin]} onClick={() => setDeleteInstanceDialog(true)} variant="destructive">
+											<OptDropdownMenuItem
+												conditions={[condAdmin]}
+												onClick={() => setDeleteInstanceDialog(true)}
+												variant="destructive"
+											>
 												删除实例
 											</OptDropdownMenuItem>
 										</DropdownMenuContent>
@@ -167,12 +282,26 @@ export default function IndexMainSection({
 								</div>
 
 								<CardContent>
-									<span className={cn('mb-2 font-normal before:block flex items-center gap-2 before:rounded-full before:h-1.25 before:w-1.25', currentInstanceStatusColor)}>{currentInstanceStatusText}</span>
+									<span
+										className={cn(
+											'mb-2 font-normal before:block flex items-center gap-2 before:rounded-full before:h-1.25 before:w-1.25',
+											currentInstanceStatusColor
+										)}
+									>
+										{currentInstanceStatusText}
+									</span>
 									<div className="flex gap-3 mb-2">
-										<div className="font-bold text-3xl">{instance.ip || '--'}</div>
-										<Button variant={'outline'}>
-											复制 <CopyIcon />
-										</Button>
+										<div className="font-bold text-3xl">
+											{instance.ip || '--'}
+										</div>
+										{instance.ip && (
+											<Button
+												onClick={() => instance.ip && copy(instance.ip)}
+												variant={'outline'}
+											>
+												复制 <CopyIcon />
+											</Button>
+										)}
 									</div>
 									{/* <div className="flex gap-2 items-center">
 											<MemoryStickIcon size={16} /> 16GB
@@ -188,7 +317,10 @@ export default function IndexMainSection({
 											'实例 ID': { content: instance.instanceId, copy: true },
 											实例型号: instance.instanceType,
 											'地域/可用区': instance.zoneId,
-											创建时间: { content: times.formatDateAgo(instance.createdAt), detail: instance.createdAt }
+											创建时间: {
+												content: times.formatDateAgo(instance.createdAt),
+												detail: instance.createdAt
+											}
 										}}
 									/>
 								</CardContent>
@@ -200,7 +332,16 @@ export default function IndexMainSection({
 							<Card>
 								<CardHeader className="flex gap-2 items-start">
 									<div className="flex gap-2 items-center">
-										<span className={cn('font-normal before:block flex items-center gap-2 before:rounded-full before:h-1.25 before:w-1.25', isServerRunning ? 'before:bg-green-500' : 'before:bg-red-500')}>{isServerRunning ? '在线' : '离线'}</span>
+										<span
+											className={cn(
+												'font-normal before:block flex items-center gap-2 before:rounded-full before:h-1.25 before:w-1.25',
+												isServerRunning
+													? 'before:bg-green-500'
+													: 'before:bg-red-500'
+											)}
+										>
+											{isServerRunning ? '在线' : '离线'}
+										</span>
 										{isServerRunning && (
 											<>
 												<Separator orientation="vertical" />
@@ -221,7 +362,10 @@ export default function IndexMainSection({
 									)}
 									{isServerRunning && (
 										<>
-											<OptTooltip show={userPayload.role !== 'admin'} content="权限不足">
+											<OptTooltip
+												show={userPayload.role !== 'admin'}
+												content="权限不足"
+											>
 												<Button
 													onClick={() => {
 														setStartOrStop('stop');
@@ -243,11 +387,16 @@ export default function IndexMainSection({
 												<Empty>
 													<EmptyHeader>
 														<EmptyMedia>
-															<img draggable="false" src="/loong-speechless.jpg" />
+															<img
+																draggable="false"
+																src="/loong-speechless.jpg"
+															/>
 														</EmptyMedia>
 													</EmptyHeader>
 													<EmptyTitle>无人在线</EmptyTitle>
-													<EmptyDescription>一阵风把大家都吹走了</EmptyDescription>
+													<EmptyDescription>
+														一阵风把大家都吹走了
+													</EmptyDescription>
 												</Empty>
 											) : (
 												<Empty>
@@ -267,7 +416,11 @@ export default function IndexMainSection({
 												return (
 													<Tooltip key={name}>
 														<TooltipTrigger>
-															<img draggable="false" src={mchead(name)} className="border-2 border-white" />
+															<img
+																draggable="false"
+																src={mchead(name)}
+																className="border-2 border-white"
+															/>
 														</TooltipTrigger>
 														<TooltipContent>{name}</TooltipContent>
 													</Tooltip>

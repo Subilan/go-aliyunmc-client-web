@@ -6,17 +6,25 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import mchead from '@/lib/mchead';
 import type { Instance } from '@/types/Instance';
 
-export default function PlayersDialog({ players, instance, ...control }: DialogControl & { players: string[]; instance: Instance | undefined }) {
+export default function PlayersDialog({
+	players,
+	instance,
+	...control
+}: DialogControl & { players: string[]; instance: Instance | undefined }) {
 	return (
 		<Wrapper {...control} title="玩家列表">
 			{instance && instance.deletedAt === null ? (
 				players.length ? (
-					<div className="grid grid-cols-15">
+					<div className="grid grid-cols-10">
 						{players.map(name => {
 							return (
 								<Tooltip key={name}>
 									<TooltipTrigger>
-										<img draggable="false" src={mchead(name)} className="border-2 border-white" />
+										<img
+											draggable="false"
+											src={mchead(name)}
+											className="border-2 border-white"
+										/>
 									</TooltipTrigger>
 									<TooltipContent>{name}</TooltipContent>
 								</Tooltip>

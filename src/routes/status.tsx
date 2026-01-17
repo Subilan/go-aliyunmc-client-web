@@ -8,12 +8,12 @@ import { fetchActiveOrLatestInstance } from '@/lib/requests/fetchActiveOrLatestI
 import { fetchServerInfo } from '@/lib/requests/fetchServerInfo';
 import times from '@/lib/times';
 import { cn } from '@/lib/utils';
-import { RootRoute } from '@/root';
+import { RootRoute, router } from '@/root';
 import { InstanceStatusColor, InstanceStatusWord } from '@/types/Instance';
 import useSimpleStream from '@/useSimpleStream';
 import { createRoute } from '@tanstack/react-router';
-import { CogIcon, CopyIcon, ServerIcon, UsersIcon } from 'lucide-react';
-import { useState } from 'react';
+import { ArrowRightIcon, CogIcon, CopyIcon, ServerIcon, UsersIcon } from 'lucide-react';
+import { useEffect, useState } from 'react';
 
 export const StatusRoute = createRoute({
 	path: '/status',
@@ -37,21 +37,66 @@ export default function Status() {
 		instance: loaded.instance
 	});
 
+	const [serverInfo, setServerInfo] = useState(loaded.server);
+
+	useEffect(() => {
+		if (stream.isServerRunning) {
+			fetchServerInfo().then(result => {
+				if (result) {
+					setServerInfo(result);
+				}
+			});
+		}
+	}, [stream.isServerRunning]);
+
 	const [instanceInfoDialog, setInstanceInfoDialog] = useState(false);
 	const [serverInfoDialog, setServerInfoDialog] = useState(false);
 	const [playersDialog, setPlayersDialog] = useState(false);
 
 	return (
 		<>
-			<InstanceInfoDialog open={instanceInfoDialog} setOpen={setInstanceInfoDialog} instance={instance} />
-			<ServerInfoDialog open={serverInfoDialog} setOpen={setServerInfoDialog} instance={instance} server={{ ...loaded.server!, running: stream.isServerRunning }} />
-			<PlayersDialog open={playersDialog} setOpen={setPlayersDialog} instance={instance} players={stream.onlinePlayers} />
+			<InstanceInfoDialog
+				open={instanceInfoDialog}
+				setOpen={setInstanceInfoDialog}
+				instance={instance}
+			/>
+			<ServerInfoDialog
+				open={serverInfoDialog}
+				setOpen={setServerInfoDialog}
+				instance={instance}
+				server={{
+					...serverInfo!,
+					onlinePlayers: stream.onlinePlayers,
+					running: stream.isServerRunning
+				}}
+			/>
+			<PlayersDialog
+				open={playersDialog}
+				setOpen={setPlayersDialog}
+				instance={instance}
+				players={stream.onlinePlayers}
+			/>
 			<div className="h-dvh w-dvw flex items-center justify-center">
 				<div className="w-100">
 					<div className="flex flex-col gap-5">
 						<div className="flex flex-col items-center gap-3">
 							<div className="flex items-center gap-2">
-								<span className={cn('font-normal before:block flex items-center gap-2 before:rounded-full before:h-1.25 before:w-1.25', InstanceStatusColor[stream.instanceStatus])}>{InstanceStatusWord[stream.instanceStatus]}</span>
+								<span
+									className={cn(
+										'font-normal before:block flex items-center gap-2 before:rounded-full before:h-1.25 before:w-1.25',
+										stream.instanceStatus !== 'Running'
+											? InstanceStatusColor[stream.instanceStatus]
+											: stream.isServerRunning
+											? InstanceStatusColor['Running']
+											: 'before:bg-amber-500'
+									)}
+								>
+									{stream.instanceStatus !== 'Running'
+										? InstanceStatusWord[stream.instanceStatus]
+										: stream.isServerRunning
+										? '服务器在线'
+										: '实例在线，服务器离线'}
+								</span>
 								{stream.isServerRunning && (
 									<>
 										<Separator orientation="vertical" />
@@ -59,8 +104,18 @@ export default function Status() {
 									</>
 								)}
 							</div>
-							<div className="text-3xl">{instance === undefined || instance.deletedAt !== null ? '暂无实例' : instance.ip ? instance.ip : '等待分配 IP...'}</div>
-							{instance && instance.deletedAt !== null && <div className="text-sm text-neutral-500">最近释放于 {times.formatDateAgo(instance.deletedAt)} </div>}
+							<div className="text-3xl">
+								{instance === undefined || instance.deletedAt !== null
+									? '暂无实例'
+									: instance.ip
+									? instance.ip
+									: '等待分配 IP...'}
+							</div>
+							{instance && instance.deletedAt !== null && (
+								<div className="text-sm text-neutral-500">
+									最近释放于 {times.formatDateAgo(instance.deletedAt)}{' '}
+								</div>
+							)}
 							{instance?.deletedAt === null && instance.ip && (
 								<Button size={'sm'}>
 									<CopyIcon />
@@ -78,8 +133,13 @@ export default function Status() {
 				<Button onClick={() => setServerInfoDialog(true)} size={'sm'} variant={'outline'}>
 					<ServerIcon /> 服务器信息
 				</Button>
-				<Button size={'sm'} variant={'outline'}>
+				<Button onClick={() => setPlayersDialog(true)} size={'sm'} variant={'outline'}>
 					<UsersIcon /> 玩家列表
+				</Button>
+				<Separator orientation="vertical" />
+				<Button onClick={() => router.navigate({ to: '/lor' })}>
+					登录以操作
+					<ArrowRightIcon />
 				</Button>
 			</div>
 		</>

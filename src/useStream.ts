@@ -20,7 +20,7 @@ export function useStream() {
 	const [serverInfo, setServerInfo] = useState<ServerInfo | undefined>(loaded.serverInfo);
 	const isServerRunning = useMemo(() => serverInfo?.running === true, [serverInfo]);
 	const [serverOnlineCount, setServerOnlineCount] = useState(loaded.serverInfo?.running ? loaded.serverInfo?.data?.players.online : 0);
-	const [serverOnlinePlayers, setServerOnlinePlayers] = useState<string[]>(loaded.serverInfo?.running ? loaded.serverInfo.onlinePlayers : []);
+	const [serverOnlinePlayers, setServerOnlinePlayers] = useState<string[]>(loaded.serverInfo?.running ? loaded.serverInfo.onlinePlayers || [] : []);
 	const deployedInstanceRunning = useMemo(() => instanceStatus === 'Running' && instance?.deletedAt === null && instance.deployed, [instance, instanceStatus]);
 	const [deployInstanceOutput, setDeployInstanceOutput] = useState('');
 	const [deployInstanceLatestOutput, setDeployInstanceLatestOutput] = useState('');
