@@ -1,4 +1,4 @@
-import { LS_KEY_USER_LOGIN_TOKEN } from '@/consts';
+import { API_BASE, LS_KEY_USER_LOGIN_TOKEN } from '@/consts';
 
 export async function isAuthenticated() {
 	const { error } = await req('/auth/ping', 'GET');
@@ -8,7 +8,7 @@ export async function isAuthenticated() {
 
 export async function req<T = any>(path: string, method: RequestInit['method'], body?: Record<string, any>): Promise<{ error: string; data: null; } | { error: null; data: T; }> {
 	const token = localStorage.getItem(LS_KEY_USER_LOGIN_TOKEN)?.slice(1, -1); // 移除添加的双引号
-	const result = await fetch('http://127.0.0.1:33791' + path, {
+	const result = await fetch(API_BASE + path, {
 		method,
 		body: body ? JSON.stringify(body) : undefined,
 		headers: {

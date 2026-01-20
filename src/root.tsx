@@ -12,9 +12,18 @@ import { ErrorBoundary } from 'react-error-boundary';
 import { Toaster } from '@/components/ui/sonner';
 import type { User } from '@/types/User';
 import { StatusRoute } from '@/routes/status';
+import { StrictMode } from 'react';
+import { createRoot } from 'react-dom/client';
+import '@fontsource/lato/300.css';
+import '@fontsource/lato/400.css';
+import '@fontsource/lato/700.css';
+import '@fontsource/lato/300-italic.css';
+import '@fontsource/lato/400-italic.css';
+import '@fontsource/lato/700-italic.css';
+import './index.css';
 
 export const RootRoute = createRootRoute({
-	errorComponent: ErrorPage
+	errorComponent: ErrorPage,
 });
 
 declare module '@tanstack/react-router' {
@@ -90,3 +99,9 @@ export function Root() {
 }
 
 export default Root;
+
+createRoot(document.getElementById('root')!).render(
+	<StrictMode>
+		<Root />
+	</StrictMode>
+);

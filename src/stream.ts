@@ -1,4 +1,4 @@
-import { LS_KEY_LAST_EVENT_ID } from '@/consts';
+import { API_BASE, LS_KEY_LAST_EVENT_ID } from '@/consts';
 import { fetchEventSource } from '@microsoft/fetch-event-source';
 import { toast } from 'sonner';
 import z from 'zod';
@@ -109,7 +109,7 @@ export class StreamManager {
 			this.deploymentBuffer.push(msg);
 		};
 
-		fetchEventSource('http://127.0.0.1:33791/stream', {
+		fetchEventSource(API_BASE + '/stream', {
 			headers: {
 				Authorization: `Bearer ${userToken}`,
 				'Last-Event-Id': this.lastEventId
@@ -215,7 +215,7 @@ export class SimpleStreamManager {
 	) {
 		this.abortController = new AbortController();
 
-		fetchEventSource('http://127.0.0.1:33791/stream/simple-public', {
+		fetchEventSource(API_BASE + '/stream/simple-public', {
 			signal: this.abortController.signal,
 			async onopen() {
 				console.log('simple stream opened');

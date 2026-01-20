@@ -13,7 +13,8 @@ import { InstanceStatusColor, InstanceStatusWord } from '@/types/Instance';
 import useSimpleStream from '@/hooks/useSimpleStream';
 import { createRoute } from '@tanstack/react-router';
 import { ArrowRightIcon, CogIcon, CopyIcon, ServerIcon, UsersIcon } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useContext, useEffect, useState } from 'react';
+import { UserPayloadContext } from '@/contexts/UserPayloadContext';
 
 export const StatusRoute = createRoute({
 	path: '/status',
@@ -53,6 +54,8 @@ export default function Status() {
 	const [serverInfoDialog, setServerInfoDialog] = useState(false);
 	const [playersDialog, setPlayersDialog] = useState(false);
 
+	const userPayload = useContext(UserPayloadContext);
+
 	return (
 		<>
 			<InstanceInfoDialog
@@ -87,17 +90,17 @@ export default function Status() {
 										stream.instanceStatus !== 'Running'
 											? InstanceStatusColor[stream.instanceStatus]
 											: stream.isServerRunning
-											? InstanceStatusColor['Running']
-											: 'before:bg-amber-500'
+												? InstanceStatusColor['Running']
+												: 'before:bg-amber-500'
 									)}
 								>
 									{stream.instanceStatus !== 'Running'
 										? InstanceStatusWord[stream.instanceStatus]
 										: stream.isServerRunning
-										? '服务器在线'
-										: '实例在线，服务器离线'}
+											? '服务器在线'
+											: '实例在线，服务器离线'}
 								</span>
-								{stream.isServerRunning && (
+								{stream.instanceStatus === 'Running' && stream.isServerRunning && (
 									<>
 										<Separator orientation="vertical" />
 										<span>{stream.onlinePlayerCount}/20</span>
@@ -108,8 +111,8 @@ export default function Status() {
 								{instance === undefined || instance.deletedAt !== null
 									? '暂无实例'
 									: instance.ip
-									? instance.ip
-									: '等待分配 IP...'}
+										? instance.ip
+										: '等待分配 IP...'}
 							</div>
 							{instance && instance.deletedAt !== null && (
 								<div className="text-sm text-neutral-500">
@@ -137,10 +140,17 @@ export default function Status() {
 					<UsersIcon /> 玩家列表
 				</Button>
 				<Separator orientation="vertical" />
-				<Button onClick={() => router.navigate({ to: '/lor' })}>
-					登录以操作
-					<ArrowRightIcon />
-				</Button>
+				{userPayload.loaded && userPayload.valid ? (
+					<Button onClick={() => router.navigate({ to: '/' })}>
+						控制台
+						<ArrowRightIcon />
+					</Button>
+				) : (
+					<Button onClick={() => router.navigate({ to: '/lor' })}>
+						登录以操作
+						<ArrowRightIcon />
+					</Button>
+				)}
 			</div>
 		</>
 	);

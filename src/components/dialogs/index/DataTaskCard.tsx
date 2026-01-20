@@ -9,6 +9,12 @@ import times from '@/lib/times';
 import { useTableNavigation } from '@/components/wrapped-table';
 import type { JoinedTask, TaskOverview } from '@/types/Task';
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import {
+	Empty,
+	EmptyContent,
+	EmptyDescription,
+	EmptyTitle
+} from '@/components/ui/empty';
 
 export default function DataTaskCard() {
 	const [taskLoading, setTaskLoading] = useState(false);
@@ -16,8 +22,14 @@ export default function DataTaskCard() {
 	const [tasks, setTasks] = useState<JoinedTask[]>([]);
 	const tasksNav = useTableNavigation();
 
-	const taskTotal = useMemo(() => (taskOverview ? taskOverview.successCount + taskOverview.unsuccessCount : 0), [taskOverview]);
-	const taskPageCount = useMemo(() => Math.ceil(taskTotal / tasksNav.pageSize), [taskTotal, tasksNav.pageSize]);
+	const taskTotal = useMemo(
+		() => (taskOverview ? taskOverview.successCount + taskOverview.unsuccessCount : 0),
+		[taskOverview]
+	);
+	const taskPageCount = useMemo(
+		() => Math.ceil(taskTotal / tasksNav.pageSize),
+		[taskTotal, tasksNav.pageSize]
+	);
 
 	const loadTask = useCallback(async () => {
 		setTaskLoading(true);
@@ -38,13 +50,13 @@ export default function DataTaskCard() {
 	useEffect(() => {
 		loadTask();
 	}, []);
-    
+
 	return (
 		<Card>
 			<CardContent>
 				{taskLoading ? (
 					<Spinner />
-				) : (
+				) : taskTotal > 0 ? (
 					<div className="flex flex-col gap-3">
 						{taskOverview && (
 							<div className="flex items-center gap-10">
@@ -65,7 +77,9 @@ export default function DataTaskCard() {
 										<span>最近执行</span>
 										<div className="text-2xl">
 											{times.formatDateAgo(taskOverview.latest.createdAt)}
-											<small className="text-neutral-500">（由 {taskOverview.latest.username} 触发）</small>
+											<small className="text-neutral-500">
+												（由 {taskOverview.latest.username} 触发）
+											</small>
 										</div>
 									</div>
 								)}
@@ -93,12 +107,25 @@ export default function DataTaskCard() {
 								type: t => <>{t.type === 'instance_deployment' && '实例部署'}</>,
 								status: t => (
 									<>
-										{t.status === 'success' && <Badge className="bg-green-200 text-green-700">成功</Badge>}
-										{t.status === 'failed' && <Badge variant={'destructive'}>失败</Badge>}
+										{t.status === 'success' && (
+											<Badge className="bg-green-200 text-green-700">
+												成功
+											</Badge>
+										)}
+										{t.status === 'failed' && (
+											<Badge variant={'destructive'}>失败</Badge>
+										)}
 									</>
 								),
 								createdAt: t => times.formatDatetime(t.createdAt),
-								updatedAt: t => (t.updatedAt ? Math.abs(times.formatDuration(t.createdAt, t.updatedAt).asSeconds()) + 's' : '-')
+								updatedAt: t =>
+									t.updatedAt
+										? Math.abs(
+												times
+													.formatDuration(t.createdAt, t.updatedAt)
+													.asSeconds()
+											) + 's'
+										: '-'
 							}}
 							pageSize={tasksNav.pageSize}
 							setPageSize={tasksNav.setPageSize}
@@ -107,6 +134,13 @@ export default function DataTaskCard() {
 							pageCount={taskPageCount}
 						/>
 					</div>
+				) : (
+					<Empty>
+						<EmptyContent>
+							<EmptyTitle>暂无任务数据</EmptyTitle>
+							<EmptyDescription>目前未运行任何任务</EmptyDescription>
+						</EmptyContent>
+					</Empty>
 				)}
 			</CardContent>
 		</Card>

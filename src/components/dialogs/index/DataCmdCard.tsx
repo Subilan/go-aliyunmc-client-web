@@ -1,16 +1,23 @@
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Spinner } from "@/components/ui/spinner";
-import WrappedTable from "@/components/wrapped-table";
-import { fetchCommandExecOverview } from "@/lib/requests/fetchCommandExecOverview";
-import { fetchCommandExecs } from "@/lib/requests/fetchCommandExecs";
-import times from "@/lib/times";
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Spinner } from '@/components/ui/spinner';
+import WrappedTable from '@/components/wrapped-table';
+import { fetchCommandExecOverview } from '@/lib/requests/fetchCommandExecOverview';
+import { fetchCommandExecs } from '@/lib/requests/fetchCommandExecs';
+import times from '@/lib/times';
 import { useTableNavigation } from '@/components/wrapped-table';
-import { CommandExecStatusColor, CommandExecStatusWord, CommandExecTypeWord, type CommandExecOverview, type JoinedCommandExec } from "@/types/CommandExec";
-import { InfoIcon } from "lucide-react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import {
+	CommandExecStatusColor,
+	CommandExecStatusWord,
+	CommandExecTypeWord,
+	type CommandExecOverview,
+	type JoinedCommandExec
+} from '@/types/CommandExec';
+import { InfoIcon } from 'lucide-react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { Empty, EmptyContent, EmptyDescription, EmptyTitle } from '@/components/ui/empty';
 
 export default function DataCmdCard() {
 	const [cmds, setCommandExecs] = useState<JoinedCommandExec[]>([]);
@@ -18,7 +25,10 @@ export default function DataCmdCard() {
 	const [cmdOverview, setCommandExecOverview] = useState<CommandExecOverview>();
 	const [cmdLoading, setCommandExecsLoading] = useState(false);
 	const cmdNav = useTableNavigation();
-	const cmdPageCount = useMemo(() => Math.ceil(cmdTotal / cmdNav.pageSize), [cmdNav.pageSize, cmdTotal]);
+	const cmdPageCount = useMemo(
+		() => Math.ceil(cmdTotal / cmdNav.pageSize),
+		[cmdNav.pageSize, cmdTotal]
+	);
 
 	const loadCommandExecs = useCallback(async () => {
 		setCommandExecsLoading(true);
@@ -47,33 +57,44 @@ export default function DataCmdCard() {
 			<CardContent>
 				{cmdLoading ? (
 					<Spinner />
-				) : (
+				) : cmdOverview && cmdOverview.successCount + cmdOverview.errorCount > 0 ? (
 					<div className="flex flex-col gap-3">
-						{cmdOverview && (
-							<div className="flex items-center gap-10">
-								<div className="flex flex-col gap-2">
-									<span>成功执行</span>
-									<div className="text-2xl">{cmdOverview.successCount}</div>
-								</div>
-								<div className="flex flex-col gap-2">
-									<span>失败执行</span>
-									<div className="text-2xl">{cmdOverview.errorCount}</div>
-								</div>
-								{cmdOverview.latestCommandExec && (
-									<div className="flex flex-col gap-2">
-										<span>最近执行</span>
-										<div className="text-2xl">
-											{times.formatDateAgo(cmdOverview.latestCommandExec.createdAt)}
-											<small className="text-neutral-500">{cmdOverview.latestCommandExec.auto ? '（自动执行）' : `（由 ${cmdOverview.latestCommandExec.username} 触发）`}</small>
-										</div>
-									</div>
-								)}
+						<div className="flex items-center gap-10">
+							<div className="flex flex-col gap-2">
+								<span>成功执行</span>
+								<div className="text-2xl">{cmdOverview.successCount}</div>
 							</div>
-						)}
+							<div className="flex flex-col gap-2">
+								<span>失败执行</span>
+								<div className="text-2xl">{cmdOverview.errorCount}</div>
+							</div>
+							{cmdOverview.latestCommandExec && (
+								<div className="flex flex-col gap-2">
+									<span>最近执行</span>
+									<div className="text-2xl">
+										{times.formatDateAgo(
+											cmdOverview.latestCommandExec.createdAt
+										)}
+										<small className="text-neutral-500">
+											{cmdOverview.latestCommandExec.auto
+												? '（自动执行）'
+												: `（由 ${cmdOverview.latestCommandExec.username} 触发）`}
+										</small>
+									</div>
+								</div>
+							)}
+						</div>
 						<WrappedTable
 							data={cmds}
 							getKey={c => c.id}
-							keys={['type', 'status', 'username', 'createdAt', 'updatedAt', 'comment']}
+							keys={[
+								'type',
+								'status',
+								'username',
+								'createdAt',
+								'updatedAt',
+								'comment'
+							]}
 							header={{
 								type: '指令',
 								status: '状态',
@@ -84,9 +105,16 @@ export default function DataCmdCard() {
 							}}
 							render={{
 								type: c => CommandExecTypeWord[c.type],
-								status: c => <Badge className={CommandExecStatusColor[c.status]}>{CommandExecStatusWord[c.status]}</Badge>,
+								status: c => (
+									<Badge className={CommandExecStatusColor[c.status]}>
+										{CommandExecStatusWord[c.status]}
+									</Badge>
+								),
 								createdAt: c => times.formatDatetime(c.createdAt),
-								updatedAt: c => Math.abs(times.formatDuration(c.createdAt, c.updatedAt).asSeconds()) + 's',
+								updatedAt: c =>
+									Math.abs(
+										times.formatDuration(c.createdAt, c.updatedAt).asSeconds()
+									) + 's',
 								comment: c =>
 									c.comment && c.comment.length > 0 ? (
 										<Popover>
@@ -109,6 +137,13 @@ export default function DataCmdCard() {
 							pageCount={cmdPageCount}
 						/>
 					</div>
+				) : (
+					<Empty>
+						<EmptyContent>
+							<EmptyTitle>暂无指令执行记录</EmptyTitle>
+							<EmptyDescription>目前未运行任何指令</EmptyDescription>
+						</EmptyContent>
+					</Empty>
 				)}
 			</CardContent>
 		</Card>
