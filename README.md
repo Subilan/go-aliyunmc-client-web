@@ -1,3 +1,3 @@
-# React + TypeScript + Vite + shadcn/ui
+# go-aliyunmc-client-web
 
-This is a template for a new Vite project with React, TypeScript, and shadcn/ui.
+**go-aliyunmc-client-web** 是 [go-aliyunmc] 的前端之一，使用 React+TanStack Router+Shadcn 构建。
