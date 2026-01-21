@@ -26,6 +26,15 @@ export const LoginRoute = createRoute({
 			toast.info('你已经登录了');
 			throw redirect({ to: '/' });
 		}
+	},
+	head() {
+		return {
+			meta: [
+				{
+					title: '登录 Seatide 控制台'
+				}
+			]
+		}
 	}
 });
 

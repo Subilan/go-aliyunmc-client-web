@@ -8,6 +8,8 @@ import {
 	createHashHistory,
 	createRootRoute,
 	createRouter,
+	HeadContent,
+	Outlet,
 	RouterProvider
 } from '@tanstack/react-router';
 import { useEffect, useState } from 'react';
@@ -30,7 +32,24 @@ import './nprogress.css';
 import nprogress from 'nprogress';
 
 export const RootRoute = createRootRoute({
-	errorComponent: ErrorPage
+	errorComponent: ErrorPage,
+	head() {
+		return {
+			meta: [
+				{
+					title: 'Seatide 控制台'
+				}
+			]
+		};
+	},
+	component() {
+		return (
+			<>
+				<HeadContent />
+				<Outlet />
+			</>
+		);
+	}
 });
 
 declare module '@tanstack/react-router' {
@@ -45,8 +64,8 @@ const routeTree = RootRoute.addChildren([IndexRoute, LoginRoute, PreviewRoute, S
 
 export const router = createRouter({ routeTree, history: hashHistory });
 
-router.subscribe('onBeforeLoad', e => e.pathChanged && nprogress.start())
-router.subscribe('onLoad', () => nprogress.done())
+router.subscribe('onBeforeLoad', e => e.pathChanged && nprogress.start());
+router.subscribe('onLoad', () => nprogress.done());
 
 const EmptyUnloadedUserPayload: UserPayload = {
 	username: '',

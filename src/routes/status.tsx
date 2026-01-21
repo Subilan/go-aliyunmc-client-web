@@ -26,6 +26,15 @@ export const StatusRoute = createRoute({
 			instanceStatus: await fetchActiveInstanceStatus(),
 			server: await fetchServerInfo()
 		};
+	},
+	head() {
+		return {
+			meta: [
+				{
+					title: 'Seatide 服务器状态'
+				}
+			]
+		};
 	}
 });
 
