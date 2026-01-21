@@ -70,7 +70,7 @@ export default function Index() {
 					<div className="flex items-center gap-3">
 						<h1 className="text-3xl">Hello, {userPayload.username}</h1>
 						<div className="flex-1" />
-						<div className="hidden lg:block">
+						<div className="hidden lg:flex items-center gap-3">
 							{tabValue === 'main' && (
 								<Button
 									variant={'outline'}
