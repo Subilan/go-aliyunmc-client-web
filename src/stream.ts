@@ -189,7 +189,7 @@ export class StreamManager {
 				}
 			},
 			onerror(err) {
-				console.warn('stream gives error: ' + err);
+				throw err
 			},
 			onclose() {
 				console.log('stream closed');
@@ -258,7 +258,7 @@ export class SimpleStreamManager {
 				}
 			},
 			onerror(err) {
-				console.warn('stream gives error: ' + err);
+				throw err
 			},
 			onclose() {
 				console.log('simple, stream closed');
