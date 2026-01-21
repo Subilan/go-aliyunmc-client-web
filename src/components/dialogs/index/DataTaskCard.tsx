@@ -59,7 +59,7 @@ export default function DataTaskCard() {
 				) : taskTotal > 0 ? (
 					<div className="flex flex-col gap-3">
 						{taskOverview && (
-							<div className="flex items-center gap-10">
+							<div className="grid grid-cols-2 justify-center lg:flex lg:justify-start items-center gap-3 lg:gap-10">
 								<div className="flex flex-col gap-2">
 									<span>任务总数</span>
 									<div className="text-2xl">{taskTotal}</div>
@@ -77,7 +77,7 @@ export default function DataTaskCard() {
 										<span>最近执行</span>
 										<div className="text-2xl">
 											{times.formatDateAgo(taskOverview.latest.createdAt)}
-											<small className="text-neutral-500">
+											<small className="text-neutral-500 hidden lg:inline-block">
 												（由 {taskOverview.latest.username} 触发）
 											</small>
 										</div>

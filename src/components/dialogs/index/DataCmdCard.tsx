@@ -59,7 +59,7 @@ export default function DataCmdCard() {
 					<Spinner />
 				) : cmdOverview && cmdOverview.successCount + cmdOverview.errorCount > 0 ? (
 					<div className="flex flex-col gap-3">
-						<div className="flex items-center gap-10">
+						<div className="grid grid-cols-2 justify-center lg:flex lg:justify-start items-center gap-3 lg:gap-10">
 							<div className="flex flex-col gap-2">
 								<span>成功执行</span>
 								<div className="text-2xl">{cmdOverview.successCount}</div>
@@ -75,7 +75,7 @@ export default function DataCmdCard() {
 										{times.formatDateAgo(
 											cmdOverview.latestCommandExec.createdAt
 										)}
-										<small className="text-neutral-500">
+										<small className="text-neutral-500 hidden lg:inline-block">
 											{cmdOverview.latestCommandExec.auto
 												? '（自动执行）'
 												: `（由 ${cmdOverview.latestCommandExec.username} 触发）`}

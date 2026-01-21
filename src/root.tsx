@@ -26,6 +26,8 @@ import '@fontsource/lato/300-italic.css';
 import '@fontsource/lato/400-italic.css';
 import '@fontsource/lato/700-italic.css';
 import './index.css';
+import './nprogress.css';
+import nprogress from 'nprogress';
 
 export const RootRoute = createRootRoute({
 	errorComponent: ErrorPage
@@ -42,6 +44,9 @@ const hashHistory = createHashHistory();
 const routeTree = RootRoute.addChildren([IndexRoute, LoginRoute, PreviewRoute, StatusRoute]);
 
 export const router = createRouter({ routeTree, history: hashHistory });
+
+router.subscribe('onBeforeLoad', e => e.pathChanged && nprogress.start())
+router.subscribe('onLoad', () => nprogress.done())
 
 const EmptyUnloadedUserPayload: UserPayload = {
 	username: '',

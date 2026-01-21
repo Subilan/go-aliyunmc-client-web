@@ -1,8 +1,21 @@
 import DataListKv from '@/components/data-list-kv';
 import type { DialogControl } from '@/components/dialogs/type';
 import Wrapper from '@/components/dialogs/Wrapper';
-import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty';
+import {
+	Empty,
+	EmptyDescription,
+	EmptyHeader,
+	EmptyMedia,
+	EmptyTitle
+} from '@/components/ui/empty';
 import { Item, ItemContent, ItemDescription, ItemMedia, ItemTitle } from '@/components/ui/item';
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue
+} from '@/components/ui/select';
 import { Spinner } from '@/components/ui/spinner';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import mchead from '@/lib/mchead';
@@ -10,7 +23,7 @@ import { req } from '@/lib/req';
 import times from '@/lib/times';
 import type { CommandExec } from '@/types/CommandExec';
 import { ServerOffIcon } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 const dirNameMappings: Record<string, string> = {
 	'/home/mc/server/archive': '总存档',
@@ -100,7 +113,10 @@ function parseServerProperties(raw: string): PublicServerProperties {
 }
 
 async function fetchServerProperties() {
-	const { data, error } = await req<string>('/server/query?queryType=get_server_properties', 'get');
+	const { data, error } = await req<string>(
+		'/server/query?queryType=get_server_properties',
+		'get'
+	);
 
 	return error === null ? parseServerProperties(data) : undefined;
 }
@@ -121,7 +137,11 @@ type OpItem = {
 async function fetchCachedPlayers() {
 	const { data, error } = await req<string>('/server/query?queryType=get_cached_players', 'get');
 
-	return error === null ? (data === '' ? [] : (JSON.parse(data) as CachedPlayerItem[])) : undefined;
+	return error === null
+		? data === ''
+			? []
+			: (JSON.parse(data) as CachedPlayerItem[])
+		: undefined;
 }
 
 async function fetchOps() {
@@ -174,7 +194,9 @@ export default function DetailDialog(props: DialogControl & { deployedInstanceRu
 				fetchOps()
 					.then(data => {
 						if (data) {
-							const opNames = Object.fromEntries(data.map(x => [x.name, true])) as Record<string, true>;
+							const opNames = Object.fromEntries(
+								data.map(x => [x.name, true])
+							) as Record<string, true>;
 
 							fetchCachedPlayers().then(players => {
 								if (players) {
@@ -202,17 +224,72 @@ export default function DetailDialog(props: DialogControl & { deployedInstanceRu
 			.finally(() => setBackupInfoLoading(false));
 	}, []);
 
+	const tabs = useMemo(
+		() => [
+			{
+				value: 'term',
+				label: '周目介绍'
+			},
+			{
+				value: 'properties',
+				label: 'server.properties'
+			},
+			{
+				value: 'backupInfo',
+				label: '备份情况'
+			},
+			{
+				value: 'players',
+				label: (
+					<>
+						周目玩家
+						{props.deployedInstanceRunning &&
+							cachedPlayers &&
+							` (${cachedPlayers.length})`}
+					</>
+				)
+			},
+			{
+				value: 'screenfetch',
+				label: 'Screenfetch'
+			},
+			{
+				value: 'sizes',
+				label: '存档大小'
+			}
+		],
+		[props.deployedInstanceRunning, cachedPlayers]
+	);
+
+	const [tabValue, setTabValue] = useState('term');
+
 	return (
-		<Wrapper open={props.open} setOpen={props.setOpen} title="周目信息" className="max-w-175!">
+		<Wrapper
+			open={props.open}
+			setOpen={props.setOpen}
+			title="周目信息"
+			className="lg:max-w-175"
+		>
 			{refreshedAt.length > 0 && <p>数据更新于 {refreshedAt}</p>}
-			<Tabs defaultValue="term">
-				<TabsList className="mb-2">
-					<TabsTrigger value="term">周目介绍</TabsTrigger>
-					<TabsTrigger value="properties">server.properties</TabsTrigger>
-					<TabsTrigger value="backupInfo">备份情况</TabsTrigger>
-					<TabsTrigger value="players">周目玩家{props.deployedInstanceRunning && cachedPlayers && ` (${cachedPlayers.length})`}</TabsTrigger>
-					<TabsTrigger value="screenfetch">Screenfetch</TabsTrigger>
-					<TabsTrigger value="sizes">存档大小</TabsTrigger>
+			<Tabs value={tabValue} onValueChange={setTabValue}>
+				<Select defaultValue={tabValue} onValueChange={value => setTabValue(value)}>
+					<SelectTrigger className="max-w-45 mb-2 lg:hidden">
+						<SelectValue />
+					</SelectTrigger>
+					<SelectContent>
+						{tabs.map(t => (
+							<SelectItem value={t.value} key={t.value}>
+								{t.label}
+							</SelectItem>
+						))}
+					</SelectContent>
+				</Select>
+				<TabsList className="mb-2 hidden lg:block">
+					{tabs.map(t => (
+						<TabsTrigger value={t.value} key={t.value}>
+							{t.label}
+						</TabsTrigger>
+					))}
 				</TabsList>
 				<TabsContent value="term">
 					<p>暂无周目介绍。</p>
@@ -253,10 +330,14 @@ export default function DetailDialog(props: DialogControl & { deployedInstanceRu
 							{backupInfo.length
 								? backupInfo.map(info => (
 										<Item key={info.id} variant={'outline'}>
-											<ItemTitle>{times.formatDatetime(info.createdAt)}</ItemTitle>
-											<ItemDescription>{info.auto ? '自动备份' : `由 ${info.by} 发起`}</ItemDescription>
+											<ItemTitle>
+												{times.formatDatetime(info.createdAt)}
+											</ItemTitle>
+											<ItemDescription>
+												{info.auto ? '自动备份' : `由 ${info.by} 发起`}
+											</ItemDescription>
 										</Item>
-								  ))
+									))
 								: '暂无备份'}
 						</div>
 					)}
@@ -272,11 +353,17 @@ export default function DetailDialog(props: DialogControl & { deployedInstanceRu
 									{cachedPlayers.map(player => (
 										<Item variant={'outline'} key={player.uuid}>
 											<ItemMedia>
-												<img draggable="false" src={mchead(player.uuid)} className="h-[40px] w-[40px]" />
+												<img
+													draggable="false"
+													src={mchead(player.uuid)}
+													className="h-[40px] w-[40px]"
+												/>
 											</ItemMedia>
 											<ItemContent>
 												<ItemTitle>{player.name}</ItemTitle>
-												<ItemDescription>{player.isOp ? 'Op' : '普通玩家'}</ItemDescription>
+												<ItemDescription>
+													{player.isOp ? 'Op' : '普通玩家'}
+												</ItemDescription>
 											</ItemContent>
 										</Item>
 									))}

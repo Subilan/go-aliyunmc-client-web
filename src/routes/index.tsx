@@ -13,6 +13,13 @@ import IndexMainSection from '@/routes/index-sections/main';
 import { useStream } from '@/hooks/useStream';
 import { createRoute, redirect } from '@tanstack/react-router';
 import { useContext, useEffect, useState } from 'react';
+import {
+	DropdownMenu,
+	DropdownMenuContent,
+	DropdownMenuItem,
+	DropdownMenuTrigger
+} from '@/components/ui/dropdown-menu';
+import { MenuIcon } from 'lucide-react';
 
 export const IndexRoute = createRoute({
 	path: '/',
@@ -58,17 +65,38 @@ export default function Index() {
 	return (
 		<>
 			<ProfileDialog open={profileDialog} setOpen={setProfileDialog} />
-			<div className="max-w-175 mx-auto my-16">
+			<div className="max-w-175 mx-5 lg:mx-auto my-16">
 				<div className="flex flex-col gap-5">
 					<div className="flex items-center gap-3">
 						<h1 className="text-3xl">Hello, {userPayload.username}</h1>
 						<div className="flex-1" />
-						{tabValue === 'main' && (
-							<Button variant={'outline'} onClick={() => setServerDetailDialog(true)}>
-								周目信息
-							</Button>
-						)}
-						<Button onClick={() => setProfileDialog(true)}>我的账号</Button>
+						<div className="hidden lg:block">
+							{tabValue === 'main' && (
+								<Button
+									variant={'outline'}
+									onClick={() => setServerDetailDialog(true)}
+								>
+									周目信息
+								</Button>
+							)}
+							<Button onClick={() => setProfileDialog(true)}>我的账号</Button>
+						</div>
+						<DropdownMenu>
+							<DropdownMenuTrigger className="lg:hidden" asChild>
+								<Button variant={'outline'}>
+									<MenuIcon />
+									菜单
+								</Button>
+							</DropdownMenuTrigger>
+							<DropdownMenuContent>
+								<DropdownMenuItem onClick={() => setServerDetailDialog(true)}>
+									周目信息
+								</DropdownMenuItem>
+								<DropdownMenuItem onClick={() => setProfileDialog(true)}>
+									我的账号
+								</DropdownMenuItem>
+							</DropdownMenuContent>
+						</DropdownMenu>
 					</div>
 					<Tabs defaultValue="main" onValueChange={v => setTabValue(v)}>
 						<TabsList className="mb-2">

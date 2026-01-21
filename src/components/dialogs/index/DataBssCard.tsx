@@ -52,7 +52,7 @@ export default function DataBssCard() {
 				) : (
 					<div className="flex flex-col gap-3">
 						{bssOverview && (
-							<div className="flex items-center gap-10">
+							<div className="grid grid-cols-2 justify-center lg:flex lg:justify-start items-center gap-3 lg:gap-10">
 								<div className="flex flex-col gap-2">
 									<span>现金余额</span>
 									<div className="text-2xl">¥{bssOverview.balance.toFixed(2)}</div>
@@ -99,7 +99,7 @@ export default function DataBssCard() {
 								<div className="flex flex-col gap-2">
 									<span>最近充值</span>
 									<div className="text-2xl">
-										¥{bssOverview.latestPayment.toFixed(2)} <small className="text-neutral-500">（{times.formatDateAgo(bssOverview.latestPaymentTime)}）</small>
+										¥{bssOverview.latestPayment.toFixed(2)} <small className="hidden lg:inline-block text-neutral-500">（{times.formatDateAgo(bssOverview.latestPaymentTime)}）</small>
 									</div>
 								</div>
 							</div>
