@@ -4,7 +4,12 @@ import { useLocalStorage } from '@uidotdev/usehooks';
 import { isAuthenticated, req } from '@/lib/req';
 import { IndexRoute } from '@/routes';
 import { LoginRoute } from '@/routes/lor';
-import { createRootRoute, createRouter, RouterProvider } from '@tanstack/react-router';
+import {
+	createHashHistory,
+	createRootRoute,
+	createRouter,
+	RouterProvider
+} from '@tanstack/react-router';
 import { useEffect, useState } from 'react';
 import { PreviewRoute } from '@/routes/preview';
 import ErrorPage from '@/error';
@@ -23,7 +28,7 @@ import '@fontsource/lato/700-italic.css';
 import './index.css';
 
 export const RootRoute = createRootRoute({
-	errorComponent: ErrorPage,
+	errorComponent: ErrorPage
 });
 
 declare module '@tanstack/react-router' {
@@ -32,9 +37,11 @@ declare module '@tanstack/react-router' {
 	}
 }
 
+const hashHistory = createHashHistory();
+
 const routeTree = RootRoute.addChildren([IndexRoute, LoginRoute, PreviewRoute, StatusRoute]);
 
-export const router = createRouter({ routeTree });
+export const router = createRouter({ routeTree, history: hashHistory });
 
 const EmptyUnloadedUserPayload: UserPayload = {
 	username: '',
