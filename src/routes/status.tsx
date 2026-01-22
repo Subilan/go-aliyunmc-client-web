@@ -41,6 +41,11 @@ export const StatusRoute = createRoute({
 export default function Status() {
 	const loaded = StatusRoute.useLoaderData();
 	const { instance, ...stream } = useSimpleStream({
+		onlinePlayerCount: loaded.server?.running
+			? loaded.server.onlinePlayers
+				? loaded.server.onlinePlayers.length
+				: 0
+			: 0,
 		onlinePlayers: loaded.server?.running ? loaded.server.onlinePlayers : [],
 		isSeverRunning: loaded.server?.running,
 		instanceStatus: loaded.instanceStatus,

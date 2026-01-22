@@ -76,7 +76,7 @@ export type PublicServerProperties = {
 	whiteList: boolean;
 	viewDistance: number;
 	simulationDistance: number;
-	pvp: boolean;
+	spawnProtection: number;
 	onlineMode: boolean;
 	difficulty: string;
 	maxPlayers: number;
@@ -305,12 +305,12 @@ export default function DetailDialog(props: DialogControl & { deployedInstanceRu
 									border
 									data={{
 										'Java 版本': 'Zulu 21',
-										游戏版本: '1.21.1',
+										游戏版本: '1.21.11',
 										服务端: 'Paper',
 										难度: serverProperties.difficulty,
 										白名单: serverProperties.whiteList,
 										正版验证: serverProperties.onlineMode,
-										PVP: serverProperties.pvp,
+										出生点保护: serverProperties.spawnProtection,
 										最大玩家: serverProperties.maxPlayers,
 										模拟距离: serverProperties.simulationDistance,
 										视距: serverProperties.viewDistance
