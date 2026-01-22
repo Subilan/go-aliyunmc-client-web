@@ -7,7 +7,7 @@ import { fetchActiveInstanceStatus } from '@/lib/requests/fetchActiveInstanceSta
 import { fetchActiveOrLatestInstance } from '@/lib/requests/fetchActiveOrLatestInstance';
 import { fetchServerInfo } from '@/lib/requests/fetchServerInfo';
 import times from '@/lib/times';
-import { cn } from '@/lib/utils';
+import { cn, copy } from '@/lib/utils';
 import { RootRoute, router } from '@/root';
 import { InstanceStatusColor, InstanceStatusWord } from '@/types/Instance';
 import useSimpleStream from '@/hooks/useSimpleStream';
@@ -129,7 +129,10 @@ export default function Status() {
 								</div>
 							)}
 							{instance?.deletedAt === null && instance.ip && (
-								<Button size={'sm'}>
+								<Button
+									size={'sm'}
+									onClick={() => instance.ip && copy(instance.ip)}
+								>
 									<CopyIcon />
 									复制 IP 地址
 								</Button>
