@@ -30,7 +30,7 @@ export default function CreateAndDeployDialog(props: DialogControl) {
 				</>
 			}
 		>
-			<p>是否确认要开始一键创建实例？</p>
+			<p>是否确认要开始一键创建实例？此过程大约需要 5 分钟完成。</p>
 		</Wrapper>
 	);
 }
