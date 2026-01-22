@@ -142,7 +142,7 @@ export default function Lor() {
 	return (
 		<>
 			<div className="flex h-dvh w-dvw items-center justify-center">
-				<Card className="w-sm">
+				<Card className="w-sm mx-5 lg:mx-0">
 					<CardHeader>
 						<CardTitle>Player Web Client {lorType === 'login' ? 'Login' : 'Register'}</CardTitle>
 						<CardDescription>玩家{lorType === 'login' ? '登录' : '注册'}</CardDescription>
