@@ -12,7 +12,7 @@ import times, { formatDatetime } from '@/lib/times';
 import { router } from '@/root';
 import type { GameBound } from '@/types/GameBound';
 import { UserRoleAdmin, UserRoleUser, type User } from '@/types/User';
-import { CogIcon, InfoIcon, PencilIcon, TrashIcon } from 'lucide-react';
+import { InfoIcon, PencilIcon, TrashIcon } from 'lucide-react';
 import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 

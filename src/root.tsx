@@ -17,7 +17,7 @@ import { PreviewRoute } from '@/routes/preview';
 import ErrorPage from '@/error';
 import { ErrorBoundary } from 'react-error-boundary';
 import { Toaster } from '@/components/ui/sonner';
-import type { User } from '@/types/User';
+import { UserRoleUser, type User } from '@/types/User';
 import { StatusRoute } from '@/routes/status';
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
@@ -72,7 +72,7 @@ const EmptyUnloadedUserPayload: UserPayload = {
 	user_id: 0,
 	valid: false,
 	loaded: false,
-	role: 'user'
+	role: UserRoleUser
 };
 
 const EmptyLoadedUserPayload: UserPayload = {
@@ -80,7 +80,7 @@ const EmptyLoadedUserPayload: UserPayload = {
 	user_id: 0,
 	valid: false,
 	loaded: true,
-	role: 'user'
+	role: UserRoleUser
 };
 
 async function checkAndFetchUserPayload() {
