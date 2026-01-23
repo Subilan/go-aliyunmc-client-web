@@ -43,6 +43,7 @@ import OptTooltip from '@/components/optional-tooltip';
 import DetailDialog from '@/components/dialogs/index/DetailDialog';
 import type { UseStreamReturn } from '@/hooks/useStream';
 import { InstanceStatusColor, InstanceStatusWord } from '@/types/Instance';
+import { UserRoleAdmin } from '@/types/User';
 
 export default function IndexMainSection({
 	serverDetailDialog,
@@ -97,7 +98,7 @@ export default function IndexMainSection({
 		[deployedInstanceRunning]
 	);
 	const condAdmin = useMemo(
-		() => ({ cond: userPayload.role !== 'admin', message: '权限不足' }),
+		() => ({ cond: userPayload.role < UserRoleAdmin, message: '权限不足' }),
 		[userPayload]
 	);
 
@@ -194,9 +195,9 @@ export default function IndexMainSection({
 								<EmptyTitle>暂无实例</EmptyTitle>
 							</EmptyHeader>
 							<EmptyContent>
-								<OptTooltip show={userPayload.role !== 'admin'} content="权限不足">
+								<OptTooltip show={userPayload.role < UserRoleAdmin} content="权限不足">
 									<Button
-										disabled={userPayload.role !== 'admin'}
+										disabled={userPayload.role < UserRoleAdmin}
 										onClick={() => setCreateInstanceDialog(true)}
 									>
 										创建实例
@@ -219,13 +220,13 @@ export default function IndexMainSection({
 											<OptTooltip
 												show={
 													(activeDeploymentTaskStatus === undefined &&
-														userPayload.role !== 'admin') ||
+														userPayload.role < UserRoleAdmin) ||
 													deployedInstanceRunning
 												}
 												content={(() => {
 													if (
 														activeDeploymentTaskStatus === undefined &&
-														userPayload.role !== 'admin'
+														userPayload.role < UserRoleAdmin
 													)
 														return '权限不足';
 													if (deployedInstanceRunning)
@@ -236,7 +237,7 @@ export default function IndexMainSection({
 												<DropdownMenuItem
 													disabled={
 														(activeDeploymentTaskStatus === undefined &&
-															userPayload.role !== 'admin') ||
+															userPayload.role < UserRoleAdmin) ||
 														deployedInstanceRunning
 													}
 													onClick={() => setDeployInstanceDialog(true)}
@@ -363,7 +364,7 @@ export default function IndexMainSection({
 									{isServerRunning && (
 										<>
 											<OptTooltip
-												show={userPayload.role !== 'admin'}
+												show={userPayload.role < UserRoleAdmin}
 												content="权限不足"
 											>
 												<Button
@@ -372,7 +373,7 @@ export default function IndexMainSection({
 														setStartOrStopServerDialog(true);
 													}}
 													variant={'destructive'}
-													disabled={userPayload.role !== 'admin'}
+													disabled={userPayload.role < UserRoleAdmin}
 												>
 													关闭服务器
 												</Button>

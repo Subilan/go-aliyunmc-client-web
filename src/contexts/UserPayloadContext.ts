@@ -1,9 +1,10 @@
+import { UserRoleUser, type User } from "@/types/User";
 import React from "react";
 
 export type UserPayload = {
     user_id: number,
     username: string,
-    role: 'user' | 'admin',
+    role: User['role'];
     valid: boolean,
     loaded: boolean
 }
@@ -13,5 +14,5 @@ export const UserPayloadContext = React.createContext<UserPayload>({
     username: '',
     valid: false,
     loaded: false,
-    role: "user"
+    role: UserRoleUser
 });

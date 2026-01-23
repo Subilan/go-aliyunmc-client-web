@@ -14,14 +14,14 @@ export default function CreateAndDeployDialog(props: DialogControl) {
 				<>
 					<Button
 						onClick={async () => {
-							const {error} = await req('/instance/create-and-deploy', 'get');
-                            
-                            if (error !== null) {
-                                toast.error('发起任务失败')
-                                return;
-                            }
+							const { error } = await req('/instance/create-and-deploy', 'get');
 
-                            toast.success('已请求任务')
+							if (error !== null) {
+								toast.error('发起任务失败：' + error);
+								return;
+							}
+
+							toast.success('已请求任务');
 							props.setOpen(false); // Close dialog after confirmation
 						}}
 					>

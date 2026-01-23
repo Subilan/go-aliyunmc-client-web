@@ -7,6 +7,7 @@ import { UserPayloadContext } from '@/contexts/UserPayloadContext';
 import { req } from '@/lib/req';
 import type { StreamManager } from '@/stream';
 import type { TaskStatus } from '@/types/Task';
+import { UserRoleAdmin } from '@/types/User';
 import { AlertCircleIcon, CheckIcon, XCircleIcon } from 'lucide-react';
 import { useContext, type SetStateAction } from 'react';
 import { toast } from 'sonner';
@@ -23,7 +24,7 @@ export default function DeployInstanceDialog({ output = '', latestOutput = '', .
 			actions={
 				<>
 					<Button
-						disabled={props.status === 'running' || props.status === 'success' || userPayload.role !== 'admin'}
+						disabled={props.status === 'running' || props.status === 'success' || userPayload.role < UserRoleAdmin}
 						onClick={async () => {
 							const { error } = await req('/instance/deploy', 'get');
 
