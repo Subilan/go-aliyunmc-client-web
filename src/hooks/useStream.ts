@@ -58,6 +58,8 @@ export function useStream(
 		setInstanceStatus(result.instanceStatus);
 		setActiveDeploymentTaskStatus(result.activeDeploymentTaskStatus);
 		setServerInfo(result.serverInfo);
+		setServerOnlineCount(result.serverInfo?.onlinePlayers.length || 0);
+		setServerOnlinePlayers(result.serverInfo?.onlinePlayers || []);
 	});
 
 	useEffect(() => {
