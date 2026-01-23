@@ -89,9 +89,11 @@ export default function Index() {
 								</Button>
 							</DropdownMenuTrigger>
 							<DropdownMenuContent>
-								<DropdownMenuItem onClick={() => setServerDetailDialog(true)}>
-									周目信息
-								</DropdownMenuItem>
+								{tabValue === 'main' && (
+									<DropdownMenuItem onClick={() => setServerDetailDialog(true)}>
+										周目信息
+									</DropdownMenuItem>
+								)}
 								<DropdownMenuItem onClick={() => setProfileDialog(true)}>
 									我的账号
 								</DropdownMenuItem>

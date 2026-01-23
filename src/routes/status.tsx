@@ -148,13 +148,13 @@ export default function Status() {
 			</div>
 			<div className="flex items-center justify-center gap-3 fixed bottom-8 w-dvw">
 				<Button onClick={() => setInstanceInfoDialog(true)} size={'sm'} variant={'outline'}>
-					<CogIcon /> 实例配置
+					<CogIcon /> <span className="hidden lg:inline">实例配置</span>
 				</Button>
 				<Button onClick={() => setServerInfoDialog(true)} size={'sm'} variant={'outline'}>
-					<ServerIcon /> 服务器信息
+					<ServerIcon /> <span className="hidden lg:inline">服务器信息</span>
 				</Button>
 				<Button onClick={() => setPlayersDialog(true)} size={'sm'} variant={'outline'}>
-					<UsersIcon /> 玩家列表
+					<UsersIcon /> <span className="hidden lg:inline">玩家列表</span>
 				</Button>
 				<Separator orientation="vertical" />
 				{userPayload.loaded && userPayload.valid ? (
