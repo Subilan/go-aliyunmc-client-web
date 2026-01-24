@@ -141,13 +141,13 @@ export function useStream(
 			switch (event.type) {
 				case 'notify': {
 					if (event.data === 'running') {
-						toast.success('服务器已开启');
+						toast.success('服务器在线');
 						setServerInfo(info => ({ ...info!, running: true }));
 						fetchServerInfo().then(info => setServerInfo(info));
 					}
 
 					if (event.data === 'closed') {
-						toast.info('服务器已关闭');
+						toast.info('服务器已离线');
 						setServerInfo(info => ({ ...info!, running: false }));
 						setServerOnlineCount(0);
 						setServerOnlinePlayers([]);
