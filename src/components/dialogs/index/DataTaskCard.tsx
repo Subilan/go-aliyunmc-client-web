@@ -1,5 +1,5 @@
 import { Badge } from '@/components/ui/badge';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Spinner } from '@/components/ui/spinner';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import WrappedTable from '@/components/wrapped-table';
@@ -9,12 +9,7 @@ import times from '@/lib/times';
 import { useTableNavigation } from '@/components/wrapped-table';
 import type { JoinedTask, TaskOverview } from '@/types/Task';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import {
-	Empty,
-	EmptyContent,
-	EmptyDescription,
-	EmptyTitle
-} from '@/components/ui/empty';
+import { Empty, EmptyContent, EmptyDescription, EmptyTitle } from '@/components/ui/empty';
 
 export default function DataTaskCard() {
 	const [taskLoading, setTaskLoading] = useState(false);
@@ -53,6 +48,9 @@ export default function DataTaskCard() {
 
 	return (
 		<Card>
+			<CardHeader>
+				<CardTitle>任务执行</CardTitle>
+			</CardHeader>
 			<CardContent>
 				{taskLoading ? (
 					<Spinner />

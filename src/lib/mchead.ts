@@ -1,3 +1,3 @@
 export default function mchead(nameOrUuid: string) {
-    return `https://mc-heads.net/avatar/${nameOrUuid}`
+    return `https://minotar.net/avatar/${nameOrUuid}/100`
 }

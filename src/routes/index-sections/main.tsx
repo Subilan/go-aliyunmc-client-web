@@ -1,5 +1,5 @@
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { UserPayloadContext } from '@/contexts/UserPayloadContext';
 import { useContext, useMemo, useState, type SetStateAction } from 'react';
 import times from '@/lib/times';
@@ -44,6 +44,7 @@ import DetailDialog from '@/components/dialogs/index/DetailDialog';
 import type { UseStreamReturn } from '@/hooks/useStream';
 import { InstanceStatusColor, InstanceStatusWord } from '@/types/Instance';
 import { UserRoleAdmin } from '@/types/User';
+import MapDialog from '@/components/dialogs/index/MapDialog';
 
 export default function IndexMainSection({
 	serverDetailDialog,
@@ -72,6 +73,7 @@ export default function IndexMainSection({
 
 	const [startOrStopServerDialog, setStartOrStopServerDialog] = useState(false);
 	const [backupOrArchiveDialog, setBackupOrArchiveDialog] = useState(false);
+	const [mapDialog, setMapDialog] = useState(false);
 	const [backupOrArchive, setBackupOrArchive] = useState<'backup' | 'archive'>('backup');
 	const [startOrStop, setStartOrStop] = useState<'start' | 'stop'>('start');
 
@@ -124,6 +126,9 @@ export default function IndexMainSection({
 						setOpen={setBackupOrArchiveDialog}
 					/>
 				)}
+				{deployedInstanceRunning && isServerRunning && (
+					<MapDialog open={mapDialog} setOpen={setMapDialog} ip={instance?.ip} />
+				)}
 				<CreateInstanceDialog
 					open={createInstanceDialog}
 					setOpen={setCreateInstanceDialog}
@@ -166,27 +171,6 @@ export default function IndexMainSection({
 						</Item>
 					)}
 					{(instance === undefined || instance.deletedAt !== null) && (
-						<Item variant={'outline'}>
-							<ItemMedia>
-								<InfoIcon size={16} />
-							</ItemMedia>
-							<ItemContent>
-								<ItemTitle>无实例</ItemTitle>
-								<ItemDescription>
-									当前没有正在运行的实例。要快速开始游戏，请单击「一键创建」。
-								</ItemDescription>
-							</ItemContent>
-							<ItemActions>
-								<Button
-									variant={'outline'}
-									onClick={() => setCreateAndDeployDialog(true)}
-								>
-									一键创建
-								</Button>
-							</ItemActions>
-						</Item>
-					)}
-					{(instance === undefined || instance.deletedAt !== null) && (
 						<Empty className="border">
 							<EmptyMedia>
 								<ServerOffIcon />
@@ -195,14 +179,31 @@ export default function IndexMainSection({
 								<EmptyTitle>暂无实例</EmptyTitle>
 							</EmptyHeader>
 							<EmptyContent>
-								<OptTooltip show={userPayload.role < UserRoleAdmin} content="权限不足">
-									<Button
-										disabled={userPayload.role < UserRoleAdmin}
-										onClick={() => setCreateInstanceDialog(true)}
-									>
-										创建实例
+								<div className="flex items-center gap-3">
+									<Button onClick={() => setCreateAndDeployDialog(true)}>
+										一键创建
 									</Button>
-								</OptTooltip>
+									<DropdownMenu>
+										<DropdownMenuTrigger asChild>
+											<Button variant={'outline'} size={'icon'}>
+												<MoreHorizontalIcon />
+											</Button>
+										</DropdownMenuTrigger>
+										<DropdownMenuContent>
+											<OptTooltip
+												show={userPayload.role < UserRoleAdmin}
+												content="权限不足"
+											>
+												<DropdownMenuItem
+													disabled={userPayload.role < UserRoleAdmin}
+													onClick={() => setCreateInstanceDialog(true)}
+												>
+													仅创建实例
+												</DropdownMenuItem>
+											</OptTooltip>
+										</DropdownMenuContent>
+									</DropdownMenu>
+								</div>
 							</EmptyContent>
 						</Empty>
 					)}
@@ -331,8 +332,10 @@ export default function IndexMainSection({
 					{instance?.deletedAt === null && instance.deployed && (
 						<section>
 							<Card>
-								<CardHeader className="flex gap-2 items-start">
-									<div className="flex gap-2 items-center">
+								<CardHeader className="flex gap-3 items-center">
+									<CardTitle>服务器控制</CardTitle>
+									<div className="flex-1"></div>
+									<div className="flex gap-3 items-center">
 										<span
 											className={cn(
 												'font-normal before:block flex items-center gap-2 before:rounded-full before:h-1.25 before:w-1.25',
@@ -350,85 +353,91 @@ export default function IndexMainSection({
 											</>
 										)}
 									</div>
-									<div className="flex-1"></div>
-									{!isServerRunning && (
-										<Button
-											onClick={() => {
-												setStartOrStop('start');
-												setStartOrStopServerDialog(true);
-											}}
-										>
-											开启服务器
-										</Button>
-									)}
-									{isServerRunning && (
-										<>
-											<OptTooltip
-												show={userPayload.role < UserRoleAdmin}
-												content="权限不足"
-											>
-												<Button
-													onClick={() => {
-														setStartOrStop('stop');
-														setStartOrStopServerDialog(true);
-													}}
-													variant={'destructive'}
-													disabled={userPayload.role < UserRoleAdmin}
-												>
-													关闭服务器
-												</Button>
-											</OptTooltip>
-										</>
-									)}
 								</CardHeader>
 								<CardContent>
-									{serverOnlineCount <= 0 && (
-										<>
-											{isServerRunning ? (
-												<Empty>
-													<EmptyHeader>
-														<EmptyMedia>
-															<img
-																draggable="false"
-																src="/loong-speechless.jpg"
-															/>
-														</EmptyMedia>
-													</EmptyHeader>
-													<EmptyTitle>无人在线</EmptyTitle>
-													<EmptyDescription>
-														一阵风把大家都吹走了
-													</EmptyDescription>
-												</Empty>
-											) : (
-												<Empty>
-													<EmptyHeader>
-														<EmptyMedia>
-															<RouteOffIcon />
-														</EmptyMedia>
-														<EmptyTitle>服务器离线</EmptyTitle>
-													</EmptyHeader>
-												</Empty>
+									<div className="flex flex-col gap-3">
+										<div className="flex items-center gap-3">
+											{!isServerRunning && (
+												<Button
+													onClick={() => {
+														setStartOrStop('start');
+														setStartOrStopServerDialog(true);
+													}}
+												>
+													开启服务器
+												</Button>
 											)}
-										</>
-									)}
-									{serverOnlineCount > 0 && serverOnlinePlayers.length > 0 && (
-										<div className="grid grid-cols-15">
-											{serverOnlinePlayers.map(name => {
-												return (
-													<Tooltip key={name}>
-														<TooltipTrigger>
-															<img
-																draggable="false"
-																src={mchead(name)}
-																className="border-2 border-white"
-															/>
-														</TooltipTrigger>
-														<TooltipContent>{name}</TooltipContent>
-													</Tooltip>
-												);
-											})}
+											{isServerRunning && (
+												<>
+													<Button
+														onClick={() => setServerDetailDialog(true)}
+														variant={'outline'}
+													>
+														服务器信息
+													</Button>
+													<Button
+														onClick={() => setMapDialog(true)}
+														variant={'outline'}
+													>
+														世界地图
+													</Button>
+													<OptTooltip
+														show={userPayload.role < UserRoleAdmin}
+														content="权限不足"
+													>
+														<Button
+															onClick={() => {
+																setStartOrStop('stop');
+																setStartOrStopServerDialog(true);
+															}}
+															variant={'destructive'}
+															disabled={
+																userPayload.role < UserRoleAdmin
+															}
+														>
+															关闭服务器
+														</Button>
+													</OptTooltip>
+												</>
+											)}
 										</div>
-									)}
+										<Separator className="my-3" />
+										<div className="flex flex-col gap-3">
+											<p>玩家列表</p>
+											{!isServerRunning && (
+												<p className="text-neutral-500">
+													<em>服务器不在线</em>
+												</p>
+											)}
+											{isServerRunning && serverOnlineCount === 0 && (
+												<p className="text-neutral-500">
+													<em>暂无玩家在线</em>
+												</p>
+											)}
+											{isServerRunning &&
+												serverOnlineCount > 0 &&
+												serverOnlinePlayers.length > 0 && (
+													<div className="grid grid-cols-15">
+														{serverOnlinePlayers.map(name => {
+															return (
+																<Tooltip key={name}>
+																	<TooltipTrigger>
+																		<img
+																			draggable="false"
+																			src={mchead(name)}
+																			className="border-2 border-white"
+																		/>
+																	</TooltipTrigger>
+																	<TooltipContent>
+																		{name}
+																	</TooltipContent>
+																</Tooltip>
+															);
+														})}
+													</div>
+												)}
+										</div>
+									</div>
 								</CardContent>
 							</Card>
 						</section>

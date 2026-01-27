@@ -21,7 +21,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import mchead from '@/lib/mchead';
 import { req } from '@/lib/req';
 import times from '@/lib/times';
-import type { CommandExec } from '@/types/CommandExec';
 import { ServerOffIcon } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 
@@ -29,7 +28,8 @@ const dirNameMappings: Record<string, string> = {
 	'/home/mc/server/archive': '总存档',
 	'/home/mc/server/archive/world': '主世界',
 	'/home/mc/server/archive/world_nether': '下界',
-	'/home/mc/server/archive/world_the_end': '末地'
+	'/home/mc/server/archive/world_the_end': '末地',
+	'/home/mc/server/archive/bluemap': '网页地图数据'
 };
 
 function DetailEmpty() {
@@ -44,12 +44,6 @@ function DetailEmpty() {
 			</EmptyHeader>
 		</Empty>
 	);
-}
-
-async function fetchServerBackups() {
-	const { data, error } = await req<CommandExec[]>('/server/backups', 'get');
-
-	return error === null ? data : undefined;
 }
 
 async function fetchServerQueryScreenfetch() {
@@ -151,8 +145,6 @@ async function fetchOps() {
 }
 
 export default function DetailDialog(props: DialogControl & { deployedInstanceRunning: boolean }) {
-	const [backupInfo, setBackupInfo] = useState<CommandExec[]>([]);
-	const [backupInfoLoading, setBackupInfoLoading] = useState(false);
 	const [screenfetch, setScreenfetch] = useState('');
 	const [screenfetchLoading, setScreenfetchLoading] = useState(false);
 	const [sizes, setSizes] = useState<{ dir: string; size: string }[]>([]);
@@ -213,30 +205,11 @@ export default function DetailDialog(props: DialogControl & { deployedInstanceRu
 		}
 	}, [props.deployedInstanceRunning]);
 
-	useEffect(() => {
-		setBackupInfoLoading(true);
-		fetchServerBackups()
-			.then(data => {
-				if (data) {
-					setBackupInfo(data);
-				}
-			})
-			.finally(() => setBackupInfoLoading(false));
-	}, []);
-
 	const tabs = useMemo(
 		() => [
 			{
-				value: 'term',
-				label: '周目介绍'
-			},
-			{
 				value: 'properties',
 				label: 'server.properties'
-			},
-			{
-				value: 'backupInfo',
-				label: '备份情况'
 			},
 			{
 				value: 'players',
@@ -267,7 +240,7 @@ export default function DetailDialog(props: DialogControl & { deployedInstanceRu
 		<Wrapper
 			open={props.open}
 			setOpen={props.setOpen}
-			title="周目信息"
+			title="服务器信息"
 			className="lg:max-w-175"
 		>
 			{refreshedAt.length > 0 && <p>数据更新于 {refreshedAt}</p>}
@@ -291,9 +264,6 @@ export default function DetailDialog(props: DialogControl & { deployedInstanceRu
 						</TabsTrigger>
 					))}
 				</TabsList>
-				<TabsContent value="term">
-					<p>暂无周目介绍。</p>
-				</TabsContent>
 				<TabsContent value="properties">
 					{props.deployedInstanceRunning ? (
 						serverPropertiesLoading ? (
@@ -322,26 +292,6 @@ export default function DetailDialog(props: DialogControl & { deployedInstanceRu
 						<DetailEmpty />
 					)}
 				</TabsContent>
-				<TabsContent value="backupInfo">
-					{backupInfoLoading ? (
-						<Spinner />
-					) : (
-						<div className="flex flex-col gap-3">
-							{backupInfo.length
-								? backupInfo.map(info => (
-										<Item key={info.id} variant={'outline'}>
-											<ItemTitle>
-												{times.formatDatetime(info.createdAt)}
-											</ItemTitle>
-											<ItemDescription>
-												{info.auto ? '自动备份' : `由 ${info.by} 发起`}
-											</ItemDescription>
-										</Item>
-									))
-								: '暂无备份'}
-						</div>
-					)}
-				</TabsContent>
 				<TabsContent value="players">
 					<div className="flex flex-col gap-3">
 						{props.deployedInstanceRunning ? (
@@ -349,24 +299,25 @@ export default function DetailDialog(props: DialogControl & { deployedInstanceRu
 								<Spinner />
 							) : (
 								<>
-									<p>此处列出了加入过此周目的所有玩家。</p>
-									{cachedPlayers.map(player => (
-										<Item variant={'outline'} key={player.uuid}>
-											<ItemMedia>
-												<img
-													draggable="false"
-													src={mchead(player.uuid)}
-													className="h-[40px] w-[40px]"
-												/>
-											</ItemMedia>
-											<ItemContent>
-												<ItemTitle>{player.name}</ItemTitle>
-												<ItemDescription>
-													{player.isOp ? 'Op' : '普通玩家'}
-												</ItemDescription>
-											</ItemContent>
-										</Item>
-									))}
+									<div className="grid gap-3 grid-cols-2">
+										{cachedPlayers.map(player => (
+											<Item variant={'outline'} key={player.uuid}>
+												<ItemMedia>
+													<img
+														draggable="false"
+														src={mchead(player.name)}
+														className="h-[40px] w-[40px]"
+													/>
+												</ItemMedia>
+												<ItemContent>
+													<ItemTitle>{player.name}</ItemTitle>
+													<ItemDescription>
+														{player.isOp ? 'Op' : '玩家'}
+													</ItemDescription>
+												</ItemContent>
+											</Item>
+										))}
+									</div>
 								</>
 							)
 						) : (

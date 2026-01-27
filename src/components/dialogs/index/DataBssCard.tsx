@@ -1,7 +1,7 @@
 import DataListKv from '@/components/data-list-kv';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Spinner } from '@/components/ui/spinner';
 import WrappedTable from '@/components/wrapped-table';
@@ -46,6 +46,11 @@ export default function DataBssCard() {
 
 	return (
 		<Card>
+			<CardHeader>
+				<CardTitle>
+					服务器经济
+				</CardTitle>
+			</CardHeader>
 			<CardContent>
 				{bssLoading ? (
 					<Spinner />

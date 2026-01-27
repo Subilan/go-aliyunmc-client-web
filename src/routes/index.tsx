@@ -20,6 +20,7 @@ import {
 	DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu';
 import { MenuIcon } from 'lucide-react';
+import IndexServerSection from '@/routes/index-sections/server';
 
 export const IndexRoute = createRoute({
 	path: '/',
@@ -71,14 +72,6 @@ export default function Index() {
 						<h1 className="text-3xl">Hello, {userPayload.username}</h1>
 						<div className="flex-1" />
 						<div className="hidden lg:flex items-center gap-3">
-							{tabValue === 'main' && (
-								<Button
-									variant={'outline'}
-									onClick={() => setServerDetailDialog(true)}
-								>
-									周目信息
-								</Button>
-							)}
 							<Button onClick={() => setProfileDialog(true)}>我的账号</Button>
 						</div>
 						<DropdownMenu>
@@ -89,11 +82,6 @@ export default function Index() {
 								</Button>
 							</DropdownMenuTrigger>
 							<DropdownMenuContent>
-								{tabValue === 'main' && (
-									<DropdownMenuItem onClick={() => setServerDetailDialog(true)}>
-										周目信息
-									</DropdownMenuItem>
-								)}
 								<DropdownMenuItem onClick={() => setProfileDialog(true)}>
 									我的账号
 								</DropdownMenuItem>
@@ -103,7 +91,8 @@ export default function Index() {
 					<Tabs defaultValue="main" onValueChange={v => setTabValue(v)}>
 						<TabsList className="mb-2">
 							<TabsTrigger value="main">服务器</TabsTrigger>
-							<TabsTrigger value="analytics">统计</TabsTrigger>
+							<TabsTrigger value="analytics">统计数据</TabsTrigger>
+							<TabsTrigger value="game">运行情况</TabsTrigger>
 						</TabsList>
 						<TabsContent value="main">
 							<IndexMainSection
@@ -114,6 +103,9 @@ export default function Index() {
 						</TabsContent>
 						<TabsContent value="analytics">
 							<IndexDataSection />
+						</TabsContent>
+						<TabsContent value="game">
+							<IndexServerSection />
 						</TabsContent>
 					</Tabs>
 				</div>
