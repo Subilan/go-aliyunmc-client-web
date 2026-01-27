@@ -4,7 +4,14 @@ import { UserPayloadContext } from '@/contexts/UserPayloadContext';
 import { useContext, useMemo, useState, type SetStateAction } from 'react';
 import times from '@/lib/times';
 import DataListKv from '@/components/data-list-kv';
-import { CopyIcon, InfoIcon, MoreHorizontalIcon, RouteOffIcon, ServerOffIcon } from 'lucide-react';
+import {
+	CopyIcon,
+	ExternalLinkIcon,
+	InfoIcon,
+	MoreHorizontalIcon,
+	RouteOffIcon,
+	ServerOffIcon
+} from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { cn, copy } from '@/lib/utils';
 import {
@@ -44,7 +51,6 @@ import DetailDialog from '@/components/dialogs/index/DetailDialog';
 import type { UseStreamReturn } from '@/hooks/useStream';
 import { InstanceStatusColor, InstanceStatusWord } from '@/types/Instance';
 import { UserRoleAdmin } from '@/types/User';
-import MapDialog from '@/components/dialogs/index/MapDialog';
 
 export default function IndexMainSection({
 	serverDetailDialog,
@@ -73,7 +79,6 @@ export default function IndexMainSection({
 
 	const [startOrStopServerDialog, setStartOrStopServerDialog] = useState(false);
 	const [backupOrArchiveDialog, setBackupOrArchiveDialog] = useState(false);
-	const [mapDialog, setMapDialog] = useState(false);
 	const [backupOrArchive, setBackupOrArchive] = useState<'backup' | 'archive'>('backup');
 	const [startOrStop, setStartOrStop] = useState<'start' | 'stop'>('start');
 
@@ -125,9 +130,6 @@ export default function IndexMainSection({
 						open={backupOrArchiveDialog}
 						setOpen={setBackupOrArchiveDialog}
 					/>
-				)}
-				{deployedInstanceRunning && isServerRunning && (
-					<MapDialog open={mapDialog} setOpen={setMapDialog} ip={instance?.ip} />
 				)}
 				<CreateInstanceDialog
 					open={createInstanceDialog}
@@ -376,10 +378,14 @@ export default function IndexMainSection({
 														服务器信息
 													</Button>
 													<Button
-														onClick={() => setMapDialog(true)}
+														onClick={() =>
+															window.open(
+																`http://${instance.ip}:8100`
+															)
+														}
 														variant={'outline'}
 													>
-														世界地图
+														世界地图 <ExternalLinkIcon />
 													</Button>
 													<OptTooltip
 														show={userPayload.role < UserRoleAdmin}
