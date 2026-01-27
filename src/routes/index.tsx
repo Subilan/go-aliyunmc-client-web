@@ -92,7 +92,7 @@ export default function Index() {
 						<TabsList className="mb-2">
 							<TabsTrigger value="main">服务器</TabsTrigger>
 							<TabsTrigger value="analytics">统计数据</TabsTrigger>
-							<TabsTrigger value="game">运行情况</TabsTrigger>
+							<TabsTrigger value="game">运行数据</TabsTrigger>
 						</TabsList>
 						<TabsContent value="main">
 							<IndexMainSection
