@@ -112,7 +112,7 @@ export default function DataBssCard() {
 						{transactions && (
 							<WrappedTable
 								data={transactions}
-								getKey={t => (t.remarks || '') + t.time + t.amount.toString()}
+								getKey={t => (t.remarks || '') + t.time + t.balance + t.amount}
 								keys={['time', 'billingCycle', 'amount', 'balance', 'remarks']}
 								header={{
 									time: '时间',
