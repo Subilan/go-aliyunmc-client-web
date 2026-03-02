@@ -1,3 +1,3 @@
-export default function mchead(nameOrUuid: string) {
-    return `https://minotar.net/avatar/${nameOrUuid}/100`
+export default function mchead(nameOrUuid: string, size=100) {
+    return `https://minotar.net/avatar/${nameOrUuid}/${size}`
 }
