@@ -197,7 +197,7 @@ export default function PlayerOnlineHistoryCard() {
 					)}
 					{!loading &&
 						(historyData.length === 0 ? (
-							<div className="text-center text-muted-foreground py-8">暂无数据</div>
+							<div className="text-center text-muted-foreground py-8">此段时间没有玩家在线</div>
 						) : (
 							<div ref={chartRef} className="w-full h-[300px]" />
 						))}
