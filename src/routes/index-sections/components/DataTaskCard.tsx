@@ -10,6 +10,7 @@ import { useTableNavigation } from '@/components/wrapped-table';
 import type { JoinedTask, TaskOverview } from '@/types/Task';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Empty, EmptyContent, EmptyDescription, EmptyTitle } from '@/components/ui/empty';
+import OverviewMetric from './OverviewMetric';
 
 export default function DataTaskCard() {
 	const [taskLoading, setTaskLoading] = useState(false);
@@ -58,28 +59,22 @@ export default function DataTaskCard() {
 					<div className="flex flex-col gap-3">
 						{taskOverview && (
 							<div className="grid grid-cols-2 justify-center lg:flex lg:justify-start items-center gap-3 lg:gap-10">
-								<div className="flex flex-col gap-2">
-									<span>任务总数</span>
-									<div className="text-2xl">{taskTotal}</div>
-								</div>
-								<div className="flex flex-col gap-2">
-									<span>成功总数</span>
-									<div className="text-2xl">{taskOverview.successCount}</div>
-								</div>
-								<div className="flex flex-col gap-2">
-									<span>失败总数</span>
-									<div className="text-2xl">{taskOverview.unsuccessCount}</div>
-								</div>
+								<OverviewMetric title="任务总数">
+									{taskTotal}
+								</OverviewMetric>
+								<OverviewMetric title="成功总数">
+									{taskOverview.successCount}
+								</OverviewMetric>
+								<OverviewMetric title="失败总数">
+									{taskOverview.unsuccessCount}
+								</OverviewMetric>
 								{taskOverview.latest && (
-									<div className="flex flex-col gap-2">
-										<span>最近执行</span>
-										<div className="text-2xl">
-											{times.formatDateAgo(taskOverview.latest.createdAt)}
-											<small className="text-neutral-500 hidden lg:inline-block">
-												（由 {taskOverview.latest.username} 触发）
-											</small>
-										</div>
-									</div>
+									<OverviewMetric title="最近执行">
+										{times.formatDateAgo(taskOverview.latest.createdAt)}
+										<small className="text-neutral-500 hidden lg:inline-block">
+											（由 {taskOverview.latest.username} 触发）
+										</small>
+									</OverviewMetric>
 								)}
 							</div>
 						)}

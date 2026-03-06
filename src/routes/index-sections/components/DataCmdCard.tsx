@@ -1,7 +1,5 @@
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Spinner } from '@/components/ui/spinner';
 import WrappedTable from '@/components/wrapped-table';
 import { fetchCommandExecOverview } from '@/lib/requests/fetchCommandExecOverview';
@@ -15,9 +13,12 @@ import {
 	type CommandExecOverview,
 	type JoinedCommandExec
 } from '@/types/CommandExec';
-import { InfoIcon } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Empty, EmptyContent, EmptyDescription, EmptyTitle } from '@/components/ui/empty';
+import OverviewMetric from './OverviewMetric';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Button } from '@/components/ui/button';
+import { InfoIcon } from 'lucide-react';
 
 export default function DataCmdCard() {
 	const [cmds, setCommandExecs] = useState<JoinedCommandExec[]>([]);
@@ -63,28 +64,21 @@ export default function DataCmdCard() {
 				) : cmdOverview && cmdOverview.successCount + cmdOverview.errorCount > 0 ? (
 					<div className="flex flex-col gap-3">
 						<div className="grid grid-cols-2 justify-center lg:flex lg:justify-start items-center gap-3 lg:gap-10">
-							<div className="flex flex-col gap-2">
-								<span>成功执行</span>
-								<div className="text-2xl">{cmdOverview.successCount}</div>
-							</div>
-							<div className="flex flex-col gap-2">
-								<span>失败执行</span>
-								<div className="text-2xl">{cmdOverview.errorCount}</div>
-							</div>
+							<OverviewMetric title="成功执行">
+								{cmdOverview.successCount}
+							</OverviewMetric>
+							<OverviewMetric title="失败执行">
+								{cmdOverview.errorCount}
+							</OverviewMetric>
 							{cmdOverview.latestCommandExec && (
-								<div className="flex flex-col gap-2">
-									<span>最近执行</span>
-									<div className="text-2xl">
-										{times.formatDateAgo(
-											cmdOverview.latestCommandExec.createdAt
-										)}
-										<small className="text-neutral-500 hidden lg:inline-block">
-											{cmdOverview.latestCommandExec.auto
-												? '（自动执行）'
-												: `（由 ${cmdOverview.latestCommandExec.username} 触发）`}
-										</small>
-									</div>
-								</div>
+								<OverviewMetric title="最近执行">
+									{times.formatDateAgo(cmdOverview.latestCommandExec.createdAt)}
+									<small className="text-neutral-500 hidden lg:inline-block">
+										{cmdOverview.latestCommandExec.auto
+											? '（自动执行）'
+											: `（由 ${cmdOverview.latestCommandExec.username} 触发）`}
+									</small>
+								</OverviewMetric>
 							)}
 						</div>
 						<WrappedTable

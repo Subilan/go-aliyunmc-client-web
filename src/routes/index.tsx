@@ -90,9 +90,9 @@ export default function Index() {
 					</div>
 					<Tabs defaultValue="main" onValueChange={v => setTabValue(v)}>
 						<TabsList className="mb-2">
-							<TabsTrigger value="main">服务器</TabsTrigger>
-							<TabsTrigger value="analytics">统计数据</TabsTrigger>
-							<TabsTrigger value="game">运行数据</TabsTrigger>
+							<TabsTrigger value="main">游戏控制</TabsTrigger>
+							<TabsTrigger value="game">服务器数据</TabsTrigger>
+							<TabsTrigger value="analytics">统计</TabsTrigger>
 						</TabsList>
 						<TabsContent value="main">
 							<IndexMainSection

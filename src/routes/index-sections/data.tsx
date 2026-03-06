@@ -1,6 +1,6 @@
-import DataBssCard from '@/components/dialogs/index/DataBssCard';
-import DataCmdCard from '@/components/dialogs/index/DataCmdCard';
-import DataTaskCard from '@/components/dialogs/index/DataTaskCard';
+import DataBssCard from '@/routes/index-sections/components/DataBssCard';
+import DataCmdCard from '@/routes/index-sections/components/DataCmdCard';
+import DataTaskCard from '@/routes/index-sections/components/DataTaskCard';
 
 export default function IndexDataSection() {
 	return (

@@ -1,8 +1,6 @@
 import DataListKv from '@/components/data-list-kv';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Spinner } from '@/components/ui/spinner';
 import WrappedTable from '@/components/wrapped-table';
 import { fetchBssOverview } from '@/lib/requests/fetchBssOverview';
@@ -11,8 +9,8 @@ import times from '@/lib/times';
 import { useTableNavigation } from '@/components/wrapped-table';
 import type { BssOverview } from '@/types/BssOverview';
 import { type Transaction, ProductTypeColor, ProductTypeWord } from '@/types/Transaction';
-import { InfoIcon } from 'lucide-react';
 import { useState, useMemo, useCallback, useEffect } from 'react';
+import OverviewMetric from './OverviewMetric';
 
 export default function DataBssCard() {
 	const [bssLoading, setBssLoading] = useState(false);
@@ -58,55 +56,38 @@ export default function DataBssCard() {
 					<div className="flex flex-col gap-3">
 						{bssOverview && (
 							<div className="grid grid-cols-2 justify-center lg:flex lg:justify-start items-center gap-3 lg:gap-10">
-								<div className="flex flex-col gap-2">
-									<span>现金余额</span>
-									<div className="text-2xl">¥{bssOverview.balance.toFixed(2)}</div>
-								</div>
-								<div className="flex flex-col gap-2">
-									<span>总消费</span>
-									<div className="text-2xl">
-										¥{bssOverview.totalExpense.toFixed(2)}
-										<Popover>
-											<PopoverTrigger asChild>
-												<Button variant={'ghost'} size={'icon-xs'}>
-													<InfoIcon />
-												</Button>
-											</PopoverTrigger>
-											<PopoverContent className="w-max">
-												<DataListKv
-													data={{
-														云服务器: `¥${bssOverview.ecsExpense.toFixed(2)}`,
-														公网流量: `¥${bssOverview.cdtExpense.toFixed(2)}`,
-														对象存储: `¥${bssOverview.ossExpense.toFixed(2)}`,
-														云盘: `¥${bssOverview.yunDiskExpense.toFixed(2)}`
-													}}
-												/>
-											</PopoverContent>
-										</Popover>
-									</div>
-								</div>
-								<div className="flex flex-col gap-2">
-									<span>平均日消费</span>
-									<div className="text-2xl">
-										¥{bssOverview.expenseAverage.toFixed(2)}
-										<Popover>
-											<PopoverTrigger asChild>
-												<Button variant={'ghost'} size={'icon-xs'}>
-													<InfoIcon />
-												</Button>
-											</PopoverTrigger>
-											<PopoverContent className="w-max">
-												<p>从数据中统计的 {bssOverview.expenseDays} 个账单日平均结果</p>
-											</PopoverContent>
-										</Popover>
-									</div>
-								</div>
-								<div className="flex flex-col gap-2">
-									<span>最近充值</span>
-									<div className="text-2xl">
-										¥{bssOverview.latestPayment.toFixed(2)} <small className="hidden lg:inline-block text-neutral-500">（{times.formatDateAgo(bssOverview.latestPaymentTime)}）</small>
-									</div>
-								</div>
+								<OverviewMetric title="现金余额">
+									¥{bssOverview.balance.toFixed(2)}
+								</OverviewMetric>
+								<OverviewMetric
+									title="总消费"
+									popoverContent={
+										<DataListKv
+											data={{
+												云服务器: `¥${bssOverview.ecsExpense.toFixed(2)}`,
+												公网流量: `¥${bssOverview.cdtExpense.toFixed(2)}`,
+												对象存储: `¥${bssOverview.ossExpense.toFixed(2)}`,
+												云盘: `¥${bssOverview.yunDiskExpense.toFixed(2)}`
+											}}
+										/>
+									}
+								>
+									¥{bssOverview.totalExpense.toFixed(2)}
+								</OverviewMetric>
+								<OverviewMetric
+									title="平均日消费"
+									popoverContent={
+										<p>从数据中统计的 {bssOverview.expenseDays} 个账单日平均结果</p>
+									}
+								>
+									¥{bssOverview.expenseAverage.toFixed(2)}
+								</OverviewMetric>
+								<OverviewMetric title="最近充值">
+									¥{bssOverview.latestPayment.toFixed(2)}{' '}
+									<small className="hidden lg:inline-block text-neutral-500">
+										（{times.formatDateAgo(bssOverview.latestPaymentTime)}）
+									</small>
+								</OverviewMetric>
 							</div>
 						)}
 						{transactions && (
