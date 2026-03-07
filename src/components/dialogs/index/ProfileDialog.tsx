@@ -301,7 +301,7 @@ export default function ProfileDialog(props: DialogControl) {
 							</p>
 						</div>
 						<div className="flex flex-col gap-2">
-							<div className="font-bold">参与游玩时间排名</div>
+							<div className="font-bold">参与游玩数据展示</div>
 							<Switch
 								checked={
 									preferences?.participate_in_play_time_ranking === undefined ||

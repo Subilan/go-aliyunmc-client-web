@@ -60,28 +60,8 @@ export default function PlayTimeRankingCard() {
 
 	return (
 		<Card>
-			<CardHeader className="flex items-center gap-3">
+			<CardHeader>
 				<CardTitle>游玩数据</CardTitle>
-				<div className="flex-1"></div>
-				<Select value={sortBy} onValueChange={v => setSortBy(v as SortBy)}>
-					<SelectTrigger className="w-[120px]">
-						<SelectValue placeholder="排序字段" />
-					</SelectTrigger>
-					<SelectContent>
-						<SelectItem value="playTime">游戏时长</SelectItem>
-						<SelectItem value="lastSeen">最后在线</SelectItem>
-						<SelectItem value="nickname">游戏名</SelectItem>
-					</SelectContent>
-				</Select>
-				<Select value={sortOrder} onValueChange={v => setSortOrder(v as SortOrder)}>
-					<SelectTrigger className="w-[100px]">
-						<SelectValue placeholder="排序顺序" />
-					</SelectTrigger>
-					<SelectContent>
-						<SelectItem value="desc">降序</SelectItem>
-						<SelectItem value="asc">升序</SelectItem>
-					</SelectContent>
-				</Select>
 			</CardHeader>
 			<CardContent>
 				{overviewLoading ? (
@@ -98,6 +78,30 @@ export default function PlayTimeRankingCard() {
 									（{overview?.latestPlayerName}）
 								</small>
 							</OverviewMetric>
+						</div>
+						<div className="flex gap-3 justify-end">
+							<Select value={sortBy} onValueChange={v => setSortBy(v as SortBy)}>
+								<SelectTrigger className="w-[120px]">
+									<SelectValue placeholder="排序字段" />
+								</SelectTrigger>
+								<SelectContent>
+									<SelectItem value="playTime">游戏时长</SelectItem>
+									<SelectItem value="lastSeen">最后在线</SelectItem>
+									<SelectItem value="nickname">游戏名</SelectItem>
+								</SelectContent>
+							</Select>
+							<Select
+								value={sortOrder}
+								onValueChange={v => setSortOrder(v as SortOrder)}
+							>
+								<SelectTrigger className="w-[100px]">
+									<SelectValue placeholder="排序顺序" />
+								</SelectTrigger>
+								<SelectContent>
+									<SelectItem value="desc">降序</SelectItem>
+									<SelectItem value="asc">升序</SelectItem>
+								</SelectContent>
+							</Select>
 						</div>
 						<WrappedTable
 							data={data}
