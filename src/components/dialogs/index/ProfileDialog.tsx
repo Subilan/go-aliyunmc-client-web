@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Spinner } from '@/components/ui/spinner';
+import { Switch } from '@/components/ui/switch';
 import { LS_KEY_USER_LOGIN_TOKEN } from '@/consts';
 import { UserPayloadContext, type UserPayload } from '@/contexts/UserPayloadContext';
 import { req } from '@/lib/req';
@@ -12,6 +13,7 @@ import times, { formatDatetime } from '@/lib/times';
 import { router } from '@/root';
 import type { GameBound } from '@/types/GameBound';
 import { UserRoleAdmin, UserRoleUser, type User } from '@/types/User';
+import type { UserPreferenceKey, UserPreferences } from '@/types/UserPreference';
 import { InfoIcon, PencilIcon, TrashIcon } from 'lucide-react';
 import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
@@ -24,6 +26,16 @@ async function getSelf() {
 async function getSelfGameBound() {
 	const { data, error } = await req<{ exists: boolean } & GameBound>('/user/game-bound', 'get');
 	return error === null ? (data.exists ? data : undefined) : undefined;
+}
+
+async function getPreferences() {
+	const { data, error } = await req<UserPreferences>('/user/preferences', 'get');
+	return error === null ? data : undefined;
+}
+
+async function upsertPreference(key: UserPreferenceKey, value: string) {
+	const { error } = await req('/user/preferences', 'PUT', { key, value });
+	return error === null;
 }
 
 function logout() {
@@ -49,6 +61,7 @@ function getRolePermissionDisplay(role: UserPayload['role']): Record<string, boo
 export default function ProfileDialog(props: DialogControl) {
 	const [user, setUser] = useState<User>();
 	const [gameBound, setGameBound] = useState<GameBound>();
+	const [preferences, setPreferences] = useState<UserPreferences>();
 	const userPayload = useContext(UserPayloadContext);
 	const [loading, setLoading] = useState(false);
 
@@ -56,6 +69,11 @@ export default function ProfileDialog(props: DialogControl) {
 		() => getRolePermissionDisplay(userPayload.role),
 		[userPayload.role]
 	);
+
+	const fetchPreferences = useCallback(async () => {
+		const result = await getPreferences();
+		setPreferences(result);
+	}, []);
 
 	useEffect(() => {
 		setLoading(true);
@@ -65,7 +83,8 @@ export default function ProfileDialog(props: DialogControl) {
 			}),
 			getSelfGameBound().then(data => {
 				if (data) setGameBound(data);
-			})
+			}),
+			fetchPreferences()
 		]).finally(() => setLoading(false));
 	}, []);
 
@@ -280,6 +299,21 @@ export default function ProfileDialog(props: DialogControl) {
 									</>
 								)}
 							</p>
+						</div>
+						<div className="flex flex-col gap-2">
+							<div className="font-bold">参与游玩时间排名</div>
+							<Switch
+								checked={
+									preferences?.participate_in_play_time_ranking === undefined ||
+									preferences.participate_in_play_time_ranking === 'true'
+								}
+								onCheckedChange={v => {
+									upsertPreference(
+										'participate_in_play_time_ranking',
+										v ? 'true' : 'false'
+									).then(fetchPreferences);
+								}}
+							/>
 						</div>
 						<div className="flex flex-col gap-2">
 							<div className="font-bold">操作</div>

@@ -109,9 +109,8 @@ export default function DataCmdCard() {
 								),
 								createdAt: c => times.formatDatetime(c.createdAt),
 								updatedAt: c =>
-									Math.abs(
-										times.formatDuration(c.createdAt, c.updatedAt).asSeconds()
-									) + 's',
+									Math.abs(times.diff(c.createdAt, c.updatedAt).asSeconds()) +
+									's',
 								comment: c =>
 									c.comment && c.comment.length > 0 ? (
 										<Popover>

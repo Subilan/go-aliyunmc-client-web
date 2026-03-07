@@ -2,6 +2,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Spinner } from '@/components/ui/spinner';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { ArrowLeftIcon, ArrowRightIcon } from 'lucide-react';
 import { useMemo, useState, type ReactNode, type SetStateAction } from 'react';
@@ -17,6 +18,7 @@ export type WrappedTableProps<T extends Record<string, any>> = {
 	page: number;
 	setPage: React.Dispatch<SetStateAction<number>>;
 	pageCount: number;
+	loading?: boolean;
 };
 
 export function useTableNavigation() {
@@ -25,13 +27,13 @@ export function useTableNavigation() {
 	return { page, setPage, pageSize, setPageSize };
 }
 
-export default function WrappedTable<T extends Record<string, any>>({ data, keys, getKey, page, setPage, setPageSize, pageCount, header, render }: WrappedTableProps<T>) {
+export default function WrappedTable<T extends Record<string, any>>({ data, keys, getKey, page, setPage, setPageSize, pageCount, header, render, loading }: WrappedTableProps<T>) {
 	const [jumpto, setJumpto] = useState('1');
 	const jumptoNumber = useMemo(() => Number(jumpto), [jumpto]);
 	const [popover, setPopover] = useState(false);
 
 	return (
-		<>
+		<div className="relative">
 			<Table>
 				<TableHeader>
 					<TableRow>
@@ -52,13 +54,19 @@ export default function WrappedTable<T extends Record<string, any>>({ data, keys
 					))}
 				</TableBody>
 			</Table>
-			<div className="flex items-center justify-between">
+			{loading && (
+				<div className="absolute inset-0 bg-white/50 flex items-center justify-center">
+					<Spinner />
+				</div>
+			)}
+			<div className="flex items-center justify-between gap-3 mt-3">
 				<div className="flex items-center gap-3">
 					<Select defaultValue="10" onValueChange={v => setPageSize(Number(v))}>
 						<SelectTrigger>
 							<SelectValue placeholder="每页显示"></SelectValue>
 						</SelectTrigger>
 						<SelectContent>
+							<SelectItem value="5">5 条</SelectItem>
 							<SelectItem value="10">10 条</SelectItem>
 							<SelectItem value="15">15 条</SelectItem>
 							<SelectItem value="20">20 条</SelectItem>
@@ -96,6 +104,6 @@ export default function WrappedTable<T extends Record<string, any>>({ data, keys
 					</PopoverContent>
 				</Popover>
 			</div>
-		</>
+		</div>
 	);
 }

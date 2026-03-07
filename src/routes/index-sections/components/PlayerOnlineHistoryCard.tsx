@@ -236,16 +236,17 @@ export default function PlayerOnlineHistoryCard() {
 								popoverContent={
 									<p>
 										在过去的 168 个小时内，服务器共运转了{' '}
-										{overviewData.serverOnlineHours.toFixed(1)} 小时，其中{' '}
+										{overviewData.serverOnlineHours.toFixed(1)} 小时， 其中{' '}
 										{overviewData.totalHours.toFixed(1)} 小时有玩家在线
 									</p>
 								}
 							>
-								{(
-									(overviewData.totalHours * 100) /
-									overviewData.serverOnlineHours
-								).toFixed(1)}
-								%
+								{overviewData.serverOnlineHours > 0
+									? `${(
+											(overviewData.totalHours * 100) /
+											overviewData.serverOnlineHours
+										).toFixed(1)}%`
+									: '无'}
 							</OverviewMetric>
 						</div>
 					)}

@@ -22,7 +22,7 @@ export default function OverviewMetric({ title, children, popoverContent }: Over
 								<InfoIcon />
 							</Button>
 						</PopoverTrigger>
-						<PopoverContent className="w-max">{popoverContent}</PopoverContent>
+						<PopoverContent className="w-auto max-w-[200px]">{popoverContent}</PopoverContent>
 					</Popover>
 				)}
 			</div>

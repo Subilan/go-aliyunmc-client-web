@@ -1,6 +1,6 @@
 import { useState } from 'react';
 
-export default function useStateWithLoading<T>(initialValue: T) {
+export default function useStateWithLoading<T>(initialValue?: T) {
 	const [loading, setLoading] = useState(false);
 	const [data, setData] = useState(initialValue);
 	return {

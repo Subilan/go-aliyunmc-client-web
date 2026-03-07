@@ -9,6 +9,7 @@ import { copy } from '@/lib/utils';
 import { CopyIcon } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 import PlayerOnlineHistoryCard from './components/PlayerOnlineHistoryCard';
+import PlayTimeRankingCard from './components/PlayTimeRankingCard';
 
 export type OssListItem = {
 	name: string;
@@ -43,9 +44,10 @@ export default function IndexServerSection() {
 		<>
 			<div className="flex flex-col gap-5">
 				<PlayerOnlineHistoryCard />
+				<PlayTimeRankingCard />
 				<Card>
 					<CardHeader>
-						<CardTitle>备份文件</CardTitle>
+						<CardTitle>世界备份记录</CardTitle>
 						<CardDescription>
 							共 {backupInfo.length} 个备份，总计{' '}
 							{(

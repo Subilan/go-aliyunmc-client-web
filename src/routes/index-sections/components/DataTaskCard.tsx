@@ -59,9 +59,7 @@ export default function DataTaskCard() {
 					<div className="flex flex-col gap-3">
 						{taskOverview && (
 							<div className="grid grid-cols-2 justify-center lg:flex lg:justify-start items-center gap-3 lg:gap-10">
-								<OverviewMetric title="任务总数">
-									{taskTotal}
-								</OverviewMetric>
+								<OverviewMetric title="任务总数">{taskTotal}</OverviewMetric>
 								<OverviewMetric title="成功总数">
 									{taskOverview.successCount}
 								</OverviewMetric>
@@ -114,9 +112,7 @@ export default function DataTaskCard() {
 								updatedAt: t =>
 									t.updatedAt
 										? Math.abs(
-												times
-													.formatDuration(t.createdAt, t.updatedAt)
-													.asSeconds()
+												times.diff(t.createdAt, t.updatedAt).asSeconds()
 											) + 's'
 										: '-'
 							}}
