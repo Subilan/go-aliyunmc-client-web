@@ -231,7 +231,7 @@ export default function PlayerOnlineHistoryCard() {
 							<OverviewMetric title="最高同时在线">
 								{overviewData.maxConcurrentPlayers}
 							</OverviewMetric>
-							<OverviewMetric
+							{/* <OverviewMetric
 								title="利用率"
 								popoverContent={
 									<p>
@@ -247,7 +247,7 @@ export default function PlayerOnlineHistoryCard() {
 											overviewData.serverOnlineHours
 										).toFixed(1)}%`
 									: '无'}
-							</OverviewMetric>
+							</OverviewMetric> */}
 						</div>
 					)}
 					<div className="relative h-[300px] border-dashed border-neutral-200 py-3 border rounded-lg">
