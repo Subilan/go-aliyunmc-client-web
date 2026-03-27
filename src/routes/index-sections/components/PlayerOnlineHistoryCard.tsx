@@ -190,7 +190,7 @@ export default function PlayerOnlineHistoryCard() {
 								<InfoIcon />
 							</Button>
 						</PopoverTrigger>
-						<PopoverContent>此处仅展示自当前时间向前倒推 168 小时的结果</PopoverContent>
+						<PopoverContent>此处仅展示自当前时间向前倒推一周时间的结果</PopoverContent>
 					</Popover>
 				</CardTitle>
 			</CardHeader>
@@ -209,18 +209,23 @@ export default function PlayerOnlineHistoryCard() {
 							<OverviewMetric
 								title="游玩玩家数"
 								popoverContent={
-									<div className="flex flex-col gap-1 max-h-60 overflow-y-auto">
-										{overviewData.uniquePlayers.map(player => (
-											<div key={player} className="flex items-center gap-2">
-												<img
-													src={mchead(player, 25)}
-													alt={player}
-													className="w-5 h-5"
-												/>
-												<span>{player}</span>
-											</div>
-										))}
-									</div>
+									overviewData.uniquePlayers.length > 0 ? (
+										<div className="flex flex-col gap-1 max-h-60 overflow-y-auto">
+											{overviewData.uniquePlayers.map(player => (
+												<div
+													key={player}
+													className="flex items-center gap-2"
+												>
+													<img
+														src={mchead(player, 25)}
+														alt={player}
+														className="w-5 h-5"
+													/>
+													<span>{player}</span>
+												</div>
+											))}
+										</div>
+									) : null
 								}
 							>
 								{overviewData.uniquePlayers.length}
